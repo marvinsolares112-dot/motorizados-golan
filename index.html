@@ -5,264 +5,524 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Motorizados Golán</title>
 <link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; background: #f0f2f5; min-height: 100vh; }
-  .header { background: #d32f2f; color: white; padding: 16px; text-align: center; }
-  .header h1 { font-size: 20px; }
-  .header p { font-size: 12px; opacity: 0.8; }
-  .container { padding: 16px; max-width: 480px; margin: 0 auto; }
-  .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-  .card h2 { font-size: 16px; color: #d32f2f; margin-bottom: 16px; border-bottom: 2px solid #d32f2f; padding-bottom: 8px; }
-  label { display: block; font-size: 13px; color: #555; margin-bottom: 4px; margin-top: 12px; font-weight: bold; }
-  input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; background: #fafafa; }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: #d32f2f; background: white; }
-  .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 12px; }
-  .btn-primary { background: #d32f2f; color: white; }
-  .btn-secondary { background: #1976d2; color: white; }
-  .btn-success { background: #388e3c; color: white; }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .info-box { background: #fff8e1; border: 1px solid #ffc107; border-radius: 8px; padding: 12px; margin-top: 12px; font-size: 13px; }
-  .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-  .info-label { color: #777; }
-  .info-value { font-weight: bold; color: #333; }
-  .foto-preview { width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-top: 8px; display: none; }
-  .gps-status { font-size: 12px; color: #777; margin-top: 4px; }
-  .seccion-incidente { display: none; }
-  .step { display: none; }
-  .step.active { display: block; }
-  .badge { display: inline-block; background: #d32f2f; color: white; border-radius: 20px; padding: 2px 10px; font-size: 12px; margin-bottom: 8px; }
-  #mensaje-estado { text-align: center; padding: 12px; border-radius: 8px; margin-top: 12px; display: none; font-weight: bold; }
-  .exito { background: #e8f5e9; color: #388e3c; }
-  .error { background: #ffebee; color: #d32f2f; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
+.header{background:#d32f2f;color:white;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:18px}
+.header p{font-size:11px;opacity:.8}
+.container{padding:16px;max-width:480px;margin:0 auto}
+.card{background:white;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.card h2{font-size:15px;color:#d32f2f;margin-bottom:14px;border-bottom:2px solid #d32f2f;padding-bottom:6px}
+label{display:block;font-size:12px;color:#555;margin-bottom:3px;margin-top:10px;font-weight:bold}
+input,select,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#fafafa}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;background:white}
+.btn{width:100%;padding:13px;border:none;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;margin-top:10px}
+.btn-red{background:#d32f2f;color:white}
+.btn-blue{background:#1976d2;color:white}
+.btn-green{background:#388e3c;color:white}
+.btn-gray{background:#777;color:white}
+.btn-orange{background:#f57c00;color:white}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.info-box{background:#fff8e1;border:1px solid #ffc107;border-radius:8px;padding:10px;margin-top:10px;font-size:12px}
+.info-row{display:flex;justify-content:space-between;margin-bottom:3px}
+.info-label{color:#777}
+.info-value{font-weight:bold;color:#333}
+.badge{display:inline-block;background:#d32f2f;color:white;border-radius:20px;padding:2px 10px;font-size:11px;margin-bottom:8px}
+.badge-green{background:#388e3c}
+.badge-blue{background:#1976d2}
+.badge-orange{background:#f57c00}
+.msg{text-align:center;padding:10px;border-radius:8px;margin-top:10px;font-weight:bold;font-size:13px;display:none}
+.msg-ok{background:#e8f5e9;color:#388e3c}
+.msg-err{background:#ffebee;color:#d32f2f}
+.step{display:none}
+.step.active{display:block}
+.foto-preview{width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-top:8px;display:none}
+.gps-txt{font-size:11px;color:#777;margin-top:3px}
+.mot-card{background:#f5f5f5;border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;border:1px solid #ddd}
+.mot-card:hover{background:#e3f2fd;border-color:#1976d2}
+.mot-nombre{font-weight:bold;font-size:13px}
+.mot-info{font-size:11px;color:#777;margin-top:2px}
+.punto-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eee;font-size:12px}
+.punto-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dot-inicio{background:#388e3c}
+.dot-seg{background:#1976d2}
+.dot-fin{background:#d32f2f}
+.dot-login{background:#f57c00}
+#mapa-detalle{height:280px;border-radius:8px;margin-top:10px}
+#mapa-general{height:320px;border-radius:8px;margin-top:10px}
+.alerta{background:#fff3e0;border:1px solid #f57c00;border-radius:8px;padding:10px;font-size:12px;color:#e65100;margin-top:8px;display:none}
+.sesion-info{font-size:11px;color:rgba(255,255,255,.8);text-align:right}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>🏍️ Motorizados Golán</h1>
-  <p>Sistema de registro de apoyo</p>
+  <div><h1>🏍️ Motorizados Golán</h1><p>Sistema de registro de apoyo</p></div>
+  <div class="sesion-info" id="sesionInfo"></div>
 </div>
 
 <div class="container">
 
-  <!-- PASO 1: Inicio de día -->
-  <div class="step active" id="paso1">
-    <div class="card">
-      <div class="badge">Paso 1 de 3</div>
-      <h2>Inicio de día</h2>
-      <label>Nombre completo</label>
-      <input type="text" id="nombreMotorizado" placeholder="Tu nombre completo">
-      <label>Placa de tu motocicleta</label>
-      <input type="text" id="placaMoto" placeholder="Ej: M751LSR" style="text-transform:uppercase">
-      <button class="btn btn-primary" onclick="irPaso2()">Continuar →</button>
-    </div>
+<!-- LOGIN -->
+<div class="step active" id="pasoLogin">
+  <div class="card">
+    <div class="badge">Acceso al sistema</div>
+    <h2>Identificate</h2>
+    <label>Código personal</label>
+    <input type="text" id="loginCodigo" placeholder="Tu código personal" style="text-transform:uppercase">
+    <button class="btn btn-red" onclick="hacerLogin()">Ingresar al sistema</button>
+    <div class="msg" id="loginMsg"></div>
   </div>
+</div>
 
-  <!-- PASO 2: Registro de apoyo -->
-  <div class="step" id="paso2">
-    <div class="card">
-      <div class="badge">Paso 2 de 3</div>
-      <h2>Registrar apoyo</h2>
-      <p style="font-size:13px;color:#777;">Bienvenido, <strong id="nombreDisplay"></strong></p>
+<!-- PANEL MOTORIZADO -->
+<div class="step" id="pasoMotorizado">
+  <div class="card">
+    <div class="badge badge-green" id="badgeEstado">Sin ruta activa</div>
+    <h2 id="bienvenidaNombre">Bienvenido</h2>
+    <div class="info-box">
+      <div class="info-row"><span class="info-label">Código:</span><span class="info-value" id="infoCodigoMot"></span></div>
+      <div class="info-row"><span class="info-label">Placa moto:</span><span class="info-value" id="infoPlacaMoto"></span></div>
+      <div class="info-row"><span class="info-label">Operación:</span><span class="info-value" id="infoOpMot"></span></div>
+    </div>
+    <div id="btnIniciarDiv">
+      <button class="btn btn-green" onclick="irIniciarRuta()">🟢 Iniciar cobertura</button>
+    </div>
+    <div id="btnsSeguimientoDiv" style="display:none">
+      <button class="btn btn-blue" onclick="irSeguimiento()">📍 Enviar seguimiento</button>
+      <button class="btn btn-orange" onclick="irFinalizar()">🔴 Finalizar cobertura</button>
+    </div>
+    <div id="alertaRuta" class="alerta"></div>
+    <button class="btn btn-gray" onclick="cerrarSesion()" style="margin-top:16px;font-size:12px;padding:8px">Cerrar sesión</button>
+  </div>
+</div>
 
-      <label>Placa de la unidad que apoyás</label>
-      <input type="text" id="placaUnidad" placeholder="Ej: C-251BZV" style="text-transform:uppercase" oninput="buscarUnidad()">
+<!-- INICIAR RUTA -->
+<div class="step" id="pasoIniciarRuta">
+  <div class="card">
+    <div class="badge">Iniciar cobertura</div>
+    <h2>¿A qué unidad vas a apoyar?</h2>
+    <label>Placa de la unidad</label>
+    <input type="text" id="placaUnidadInicio" placeholder="Ej: C-251BZV" style="text-transform:uppercase" oninput="buscarUnidadInicio()">
+    <div class="info-box" id="infoUnidadInicio" style="display:none">
+      <div class="info-row"><span class="info-label">Ruta:</span><span class="info-value" id="iRuta"></span></div>
+      <div class="info-row"><span class="info-label">Operación:</span><span class="info-value" id="iOp"></span></div>
+      <div class="info-row"><span class="info-label">Unidad operativa:</span><span class="info-value" id="iUnidadOp"></span></div>
+    </div>
+    <label>📍 Ubicación GPS</label>
+    <button class="btn btn-blue" onclick="capturarGPS('inicioGps','inicioGpsTxt')">Capturar ubicación</button>
+    <p class="gps-txt" id="inicioGpsTxt">Sin ubicación</p>
+    <label>📷 Foto de la unidad</label>
+    <input type="file" id="inicioFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('inicioFoto','inicioFotoPreview')">
+    <img id="inicioFotoPreview" class="foto-preview">
+    <button class="btn btn-green" onclick="enviarInicioRuta()">✅ Confirmar inicio</button>
+    <button class="btn btn-gray" onclick="volverPanel()">← Volver</button>
+    <div class="msg" id="inicioMsg"></div>
+  </div>
+</div>
 
-      <div class="info-box" id="infoUnidad" style="display:none">
-        <div class="info-row"><span class="info-label">Ruta:</span><span class="info-value" id="infoRuta"></span></div>
-        <div class="info-row"><span class="info-label">Operación:</span><span class="info-value" id="infoOperacion"></span></div>
-        <div class="info-row"><span class="info-label">Unidad operativa:</span><span class="info-value" id="infoUnidadOp"></span></div>
-        <div class="info-row"><span class="info-label">Tipo de ruta:</span><span class="info-value" id="infoTipoRuta"></span></div>
-      </div>
+<!-- SEGUIMIENTO -->
+<div class="step" id="pasoSeguimiento">
+  <div class="card">
+    <div class="badge badge-blue">Seguimiento</div>
+    <h2>Reporte de seguimiento</h2>
+    <label>📍 Ubicación GPS</label>
+    <button class="btn btn-blue" onclick="capturarGPS('segGps','segGpsTxt')">Capturar ubicación</button>
+    <p class="gps-txt" id="segGpsTxt">Sin ubicación</p>
+    <label>📷 Foto</label>
+    <input type="file" id="segFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('segFoto','segFotoPreview')">
+    <img id="segFotoPreview" class="foto-preview">
+    <button class="btn btn-blue" onclick="enviarSeguimiento()">✅ Enviar seguimiento</button>
+    <button class="btn btn-gray" onclick="volverPanel()">← Volver</button>
+    <div class="msg" id="segMsg"></div>
+  </div>
+</div>
 
-      <label>📍 Ubicación GPS</label>
-      <button class="btn btn-secondary" onclick="capturarGPS()">Capturar ubicación</button>
-      <p class="gps-status" id="gpsStatus">Sin ubicación capturada</p>
-
-      <label>📷 Fotografía</label>
-      <input type="file" id="fotoInput" accept="image/*" capture="environment" onchange="previsualizarFoto()">
-      <img id="fotoPreview" class="foto-preview">
-
-      <label>¿Realizó rondas?</label>
-      <select id="rondasRealizadas" onchange="toggleMotivo()">
-        <option value="Sí">Sí</option>
-        <option value="No">No</option>
+<!-- FINALIZAR -->
+<div class="step" id="pasoFinalizar">
+  <div class="card">
+    <div class="badge badge-orange">Finalizar cobertura</div>
+    <h2>Cierre de cobertura</h2>
+    <label>¿Realizó rondas?</label>
+    <select id="finRondas" onchange="toggleMotivoFin()">
+      <option value="Sí">Sí</option>
+      <option value="No">No</option>
+    </select>
+    <div id="finMotivoDiv" style="display:none">
+      <label>Motivo de no realizar ronda</label>
+      <select id="finMotivo">
+        <option value="">Seleccioná</option>
+        <option>Falla mecánica</option>
+        <option>Accidente vial</option>
+        <option>Emergencia médica</option>
+        <option>Emergencia personal</option>
+        <option>Abandono de puesto</option>
+        <option>Abastecimiento de combustible</option>
+        <option>Mantenimiento correctivo</option>
+        <option>Mantenimiento preventivo</option>
       </select>
-
-      <div id="motivoDiv" style="display:none">
-        <label>Motivo de no realizar ronda</label>
-        <select id="motivoNoRonda">
-          <option value="">Seleccioná un motivo</option>
-          <option>Falla mecánica</option>
-          <option>Accidente vial</option>
-          <option>Emergencia médica</option>
-          <option>Emergencia personal</option>
-          <option>Abandono de puesto</option>
-          <option>Abastecimiento de combustible</option>
-          <option>Mantenimiento correctivo</option>
-          <option>Mantenimiento preventivo</option>
-          <option>Cobertura especial</option>
-        </select>
-      </div>
-
-      <label>¿Hubo incidente?</label>
-      <select id="incidenteReportado" onchange="toggleIncidente()">
-        <option value="No">No</option>
-        <option value="Sí">Sí</option>
+    </div>
+    <label>¿Hubo incidente?</label>
+    <select id="finIncidente" onchange="toggleIncidenteFin()">
+      <option value="No">No</option>
+      <option value="Sí">Sí</option>
+    </select>
+    <div id="finIncidenteDiv" style="display:none">
+      <label>Tipo de incidencia</label>
+      <select id="finTipoInc">
+        <option value="">Seleccioná</option>
+        <option>Robo</option><option>Hurto</option>
+        <option>Persona sospechosa</option>
+        <option>Vehículo sospechoso</option>
+        <option>Accidente vial</option>
+        <option>Ataque armado</option>
       </select>
-
-      <div class="seccion-incidente" id="seccionIncidente">
-        <label>Tipo de incidencia</label>
-        <select id="tipoIncidencia">
-          <option value="">Seleccioná</option>
-          <option>Robo</option>
-          <option>Hurto</option>
-          <option>Persona sospechosa</option>
-          <option>Vehículo sospechoso</option>
-          <option>Accidente vial</option>
-          <option>Ataque armado</option>
-          <option>Resguardo de unidad</option>
-          <option>Unidad retenida</option>
-        </select>
-        <label>Acción efectuada</label>
-        <select id="accionEfectuada">
-          <option value="">Seleccioná</option>
-          <option>Accionó arma</option>
-          <option>Repelió ataque</option>
-          <option>Disuación efectiva</option>
-          <option>N/A</option>
-        </select>
-        <label>Cantidad de heridos</label>
-        <input type="number" id="cantidadHeridos" value="0" min="0">
-        <label>Cantidad de fallecidos</label>
-        <input type="number" id="cantidadFallecidos" value="0" min="0">
-        <label>Descripción del incidente</label>
-        <textarea id="descripcionIncidente" rows="3" placeholder="Describí lo que ocurrió..."></textarea>
-        <label>Hora inicio incidencia</label>
-        <input type="time" id="horaInicioIncidencia">
-        <label>Hora fin incidencia</label>
-        <input type="time" id="horaFinIncidencia">
-      </div>
-
-      <label>Observaciones (opcional)</label>
-      <textarea id="observaciones" rows="2" placeholder="Alguna observación adicional..."></textarea>
-
-      <button class="btn btn-success" onclick="irPaso3()">Finalizar registro →</button>
-      <button class="btn" style="background:#777;color:white;margin-top:8px" onclick="irPaso1()">← Volver</button>
+      <label>Acción efectuada</label>
+      <select id="finAccion">
+        <option value="">Seleccioná</option>
+        <option>Accionó arma</option>
+        <option>Repelió ataque</option>
+        <option>Disuación efectiva</option>
+        <option>N/A</option>
+      </select>
+      <label>Heridos</label>
+      <input type="number" id="finHeridos" value="0" min="0">
+      <label>Fallecidos</label>
+      <input type="number" id="finFallecidos" value="0" min="0">
+      <label>Descripción</label>
+      <textarea id="finDesc" rows="3" placeholder="Describí el incidente..."></textarea>
     </div>
+    <label>Observaciones</label>
+    <textarea id="finObs" rows="2" placeholder="Opcional..."></textarea>
+    <button class="btn btn-orange" onclick="enviarFin()">🔴 Finalizar cobertura</button>
+    <button class="btn btn-gray" onclick="volverPanel()">← Volver</button>
+    <div class="msg" id="finMsg"></div>
   </div>
+</div>
 
-  <!-- PASO 3: Confirmación -->
-  <div class="step" id="paso3">
-    <div class="card">
-      <div class="badge">Paso 3 de 3</div>
-      <h2>Confirmar y enviar</h2>
-      <div class="info-box" id="resumenFinal"></div>
-      <button class="btn btn-success" id="btnEnviar" onclick="enviarRegistro()">✅ Enviar registro</button>
-      <button class="btn" style="background:#777;color:white;margin-top:8px" onclick="irPaso2()">← Corregir</button>
-      <div id="mensaje-estado"></div>
-    </div>
+<!-- PANEL ADMIN -->
+<div class="step" id="pasoAdmin">
+  <div class="card">
+    <div class="badge badge-blue">Panel administrador</div>
+    <h2>Control de motorizados</h2>
+    <button class="btn btn-blue" onclick="cargarAdmin()">🔄 Actualizar</button>
+    <div id="listaMotorizados" style="margin-top:12px"></div>
+    <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:8px">← Volver</button>
   </div>
+  <div class="card" id="detalleMotorizado" style="display:none">
+    <h2 id="detalleNombre">Detalle</h2>
+    <div id="listaPuntos"></div>
+    <div id="mapa-detalle"></div>
+  </div>
+  <div class="card">
+    <h2>Mapa general — todos activos</h2>
+    <button class="btn btn-blue" onclick="cargarMapaGeneral()">🗺️ Ver mapa general</button>
+    <div id="mapa-general"></div>
+  </div>
+</div>
 
 </div>
 
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYCl3ZYGpRWbDNST6Di7lCBrHWpoCLjhTzjzYuCEzCeJVbxN94KTtu_duPXont5tWSfA/exec";
-
-let gpsLat = "", gpsLng = "", fotoBase64 = "", horaInicio = "";
-
+const SESION_HORAS = 20;
 const MAESTRO = {};
+let sesion = null;
+let gpsData = {};
+let mapaDetalle = null;
+let mapaGeneral = null;
 
-async function cargarMaestro() {
+function mostrarPaso(id) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function mostrarMsg(id, texto, tipo) {
+  const el = document.getElementById(id);
+  el.textContent = texto;
+  el.className = 'msg ' + (tipo === 'ok' ? 'msg-ok' : 'msg-err');
+  el.style.display = 'block';
+  if (tipo === 'ok') setTimeout(() => el.style.display = 'none', 4000);
+}
+
+async function hacerLogin() {
+  const codigo = document.getElementById('loginCodigo').value.trim().toUpperCase();
+  if (!codigo) { mostrarMsg('loginMsg', 'Ingresá tu código personal.', 'err'); return; }
+
+  mostrarMsg('loginMsg', 'Verificando...', 'ok');
   try {
-    const res = await fetch(`${SCRIPT_URL}?action=maestro`);
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({action: 'login', codigo})
+    });
     const data = await res.json();
-    data.forEach(u => { MAESTRO[u.placa.trim().toUpperCase()] = u; });
-  } catch(e) {}
-}
-
-function irPaso1() {
-  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-  document.getElementById('paso1').classList.add('active');
-}
-
-function irPaso2() {
-  const nombre = document.getElementById('nombreMotorizado').value.trim();
-  const placaMoto = document.getElementById('placaMoto').value.trim();
-  if (!nombre || !placaMoto) { alert('Por favor completá tu nombre y placa de moto.'); return; }
-  document.getElementById('nombreDisplay').textContent = nombre;
-  horaInicio = new Date().toTimeString().slice(0,5);
-  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-  document.getElementById('paso2').classList.add('active');
-}
-
-function irPaso3() {
-  const placa = document.getElementById('placaUnidad').value.trim().toUpperCase();
-  if (!placa) { alert('Por favor ingresá la placa de la unidad.'); return; }
-  if (!gpsLat) { alert('Por favor capturá la ubicación GPS.'); return; }
-  
-  const horaFin = new Date().toTimeString().slice(0,5);
-  const unidad = MAESTRO[placa] || {};
-  
-  document.getElementById('resumenFinal').innerHTML = `
-    <div class="info-row"><span class="info-label">Motorizado:</span><span class="info-value">${document.getElementById('nombreMotorizado').value}</span></div>
-    <div class="info-row"><span class="info-label">Placa unidad:</span><span class="info-value">${placa}</span></div>
-    <div class="info-row"><span class="info-label">Operación:</span><span class="info-value">${unidad.operacion || 'No encontrada'}</span></div>
-    <div class="info-row"><span class="info-label">Unidad operativa:</span><span class="info-value">${unidad.unidadOperativa || '-'}</span></div>
-    <div class="info-row"><span class="info-label">Hora inicio:</span><span class="info-value">${horaInicio}</span></div>
-    <div class="info-row"><span class="info-label">Hora fin:</span><span class="info-value">${horaFin}</span></div>
-    <div class="info-row"><span class="info-label">GPS:</span><span class="info-value">${gpsLat}, ${gpsLng}</span></div>
-    <div class="info-row"><span class="info-label">Foto:</span><span class="info-value">${fotoBase64 ? '✅ Capturada' : '❌ Sin foto'}</span></div>
-    <div class="info-row"><span class="info-label">Rondas:</span><span class="info-value">${document.getElementById('rondasRealizadas').value}</span></div>
-    <div class="info-row"><span class="info-label">Incidente:</span><span class="info-value">${document.getElementById('incidenteReportado').value}</span></div>
-  `;
-  
-  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-  document.getElementById('paso3').classList.add('active');
-}
-
-function buscarUnidad() {
-  const placa = document.getElementById('placaUnidad').value.trim().toUpperCase();
-  const unidad = MAESTRO[placa];
-  if (unidad) {
-    document.getElementById('infoRuta').textContent = unidad.rutaAsignada || '-';
-    document.getElementById('infoOperacion').textContent = unidad.operacion || '-';
-    document.getElementById('infoUnidadOp').textContent = unidad.unidadOperativa || '-';
-    document.getElementById('infoTipoRuta').textContent = unidad.tipoRuta || '-';
-    document.getElementById('infoUnidad').style.display = 'block';
-  } else {
-    document.getElementById('infoUnidad').style.display = 'none';
+    if (data.success) {
+      sesion = {
+        codigo: data.codigo,
+        nombre: data.nombre,
+        placaMoto: data.placaMoto,
+        operacion: data.operacion,
+        unidadOperativa: data.unidadOperativa,
+        esAdmin: data.esAdmin,
+        expira: Date.now() + (SESION_HORAS * 60 * 60 * 1000)
+      };
+      localStorage.setItem('sesionGolan', JSON.stringify(sesion));
+      await cargarMaestro();
+      mostrarPanelMotorizado();
+    } else {
+      mostrarMsg('loginMsg', data.error, 'err');
+    }
+  } catch(e) {
+    mostrarMsg('loginMsg', 'Error de conexión. Intentá de nuevo.', 'err');
   }
 }
 
-function capturarGPS() {
+function mostrarPanelMotorizado() {
+  document.getElementById('bienvenidaNombre').textContent = `Hola, ${sesion.nombre}`;
+  document.getElementById('infoCodigoMot').textContent = sesion.codigo;
+  document.getElementById('infoPlacaMoto').textContent = sesion.placaMoto;
+  document.getElementById('infoOpMot').textContent = sesion.operacion;
+  const expira = new Date(sesion.expira);
+  document.getElementById('sesionInfo').textContent = `Sesión hasta ${expira.getHours()}:${String(expira.getMinutes()).padStart(2,'0')}`;
+  if (sesion.esAdmin) {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-blue';
+    btn.style.marginTop = '8px';
+    btn.textContent = '🔧 Panel administrador';
+    btn.onclick = () => { mostrarPaso('pasoAdmin'); cargarAdmin(); };
+    const div = document.getElementById('btnIniciarDiv');
+    if (!document.getElementById('btnAdmin')) {
+      btn.id = 'btnAdmin';
+      div.appendChild(btn);
+    }
+  }
+  mostrarPaso('pasoMotorizado');
+  verificarRutaActiva();
+}
+
+function verificarRutaActiva() {
+  const activa = localStorage.getItem('rutaActiva_' + sesion.codigo);
+  if (activa) {
+    document.getElementById('badgeEstado').textContent = '🟢 Ruta activa';
+    document.getElementById('badgeEstado').style.background = '#388e3c';
+    document.getElementById('btnIniciarDiv').style.display = 'none';
+    document.getElementById('btnsSeguimientoDiv').style.display = 'block';
+  } else {
+    document.getElementById('badgeEstado').textContent = 'Sin ruta activa';
+    document.getElementById('badgeEstado').style.background = '#d32f2f';
+    document.getElementById('btnIniciarDiv').style.display = 'block';
+    document.getElementById('btnsSeguimientoDiv').style.display = 'none';
+  }
+}
+
+function irIniciarRuta() { mostrarPaso('pasoIniciarRuta'); }
+function irSeguimiento() { mostrarPaso('pasoSeguimiento'); }
+function irFinalizar() { mostrarPaso('pasoFinalizar'); }
+function volverPanel() { mostrarPaso('pasoMotorizado'); verificarRutaActiva(); }
+
+async function enviarInicioRuta() {
+  const placa = document.getElementById('placaUnidadInicio').value.trim().toUpperCase();
+  if (!placa) { mostrarMsg('inicioMsg', 'Ingresá la placa de la unidad.', 'err'); return; }
+  if (!gpsData.inicioGps) { mostrarMsg('inicioMsg', 'Capturá la ubicación GPS primero.', 'err'); return; }
+
+  const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'iniciarRuta',
+        codigo: sesion.codigo,
+        codigoMotorizado: sesion.codigo,
+        nombre: sesion.nombre,
+        placaMoto: sesion.placaMoto,
+        placa,
+        latitud: gpsData.inicioGps.lat,
+        longitud: gpsData.inicioGps.lng,
+        foto: document.getElementById('inicioFotoPreview').src || ''
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem('rutaActiva_' + sesion.codigo, placa);
+      localStorage.setItem('placaActiva_' + sesion.codigo, placa);
+      mostrarMsg('inicioMsg', `✅ ${data.mensaje}`, 'ok');
+      setTimeout(volverPanel, 2000);
+    } else {
+      mostrarMsg('inicioMsg', data.error, 'err');
+    }
+  } catch(e) {
+    mostrarMsg('inicioMsg', 'Error de conexión.', 'err');
+  }
+  btn.disabled = false; btn.textContent = '✅ Confirmar inicio';
+}
+
+async function enviarSeguimiento() {
+  if (!gpsData.segGps) { mostrarMsg('segMsg', 'Capturá la ubicación GPS primero.', 'err'); return; }
+  const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'seguimiento',
+        codigoMotorizado: sesion.codigo,
+        nombre: sesion.nombre,
+        placaMoto: sesion.placaMoto,
+        placa: localStorage.getItem('placaActiva_' + sesion.codigo) || '',
+        latitud: gpsData.segGps.lat,
+        longitud: gpsData.segGps.lng,
+        foto: document.getElementById('segFotoPreview').src || ''
+      })
+    });
+    const data = await res.json();
+    mostrarMsg('segMsg', data.success ? `✅ ${data.mensaje}` : data.error, data.success ? 'ok' : 'err');
+    if (data.success) setTimeout(volverPanel, 2000);
+  } catch(e) {
+    mostrarMsg('segMsg', 'Error de conexión.', 'err');
+  }
+  btn.disabled = false; btn.textContent = '✅ Enviar seguimiento';
+}
+
+async function enviarFin() {
+  const btn = event.target; btn.disabled = true; btn.textContent = 'Finalizando...';
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'finalizarRuta',
+        codigoMotorizado: sesion.codigo,
+        nombre: sesion.nombre,
+        placaMoto: sesion.placaMoto,
+        placa: localStorage.getItem('placaActiva_' + sesion.codigo) || '',
+        latitud: '', longitud: '',
+        rondasRealizadas: document.getElementById('finRondas').value,
+        motivoNoRonda: document.getElementById('finMotivo')?.value || '',
+        incidenteReportado: document.getElementById('finIncidente').value,
+        tipoIncidencia: document.getElementById('finTipoInc')?.value || '',
+        accionEfectuada: document.getElementById('finAccion')?.value || '',
+        cantidadHeridos: document.getElementById('finHeridos')?.value || '0',
+        cantidadFallecidos: document.getElementById('finFallecidos')?.value || '0',
+        descripcionIncidente: document.getElementById('finDesc')?.value || '',
+        observaciones: document.getElementById('finObs').value
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      localStorage.removeItem('rutaActiva_' + sesion.codigo);
+      localStorage.removeItem('placaActiva_' + sesion.codigo);
+      mostrarMsg('finMsg', `✅ ${data.mensaje} — Tiempo: ${data.tiempoTotal}`, 'ok');
+      setTimeout(volverPanel, 2500);
+    } else {
+      mostrarMsg('finMsg', data.error, 'err');
+    }
+  } catch(e) {
+    mostrarMsg('finMsg', 'Error de conexión.', 'err');
+  }
+  btn.disabled = false; btn.textContent = '🔴 Finalizar cobertura';
+}
+
+async function cargarAdmin() {
+  document.getElementById('listaMotorizados').innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({action: 'adminMotorizados', codigo: sesion.codigo})
+    });
+    const data = await res.json();
+    if (!data.success) { document.getElementById('listaMotorizados').innerHTML = '<p style="color:red;font-size:13px">'+data.error+'</p>'; return; }
+    const lista = document.getElementById('listaMotorizados');
+    if (!data.motorizados.length) {
+      lista.innerHTML = '<p style="font-size:13px;color:#777">Ningún motorizado activo hoy.</p>';
+      return;
+    }
+    lista.innerHTML = data.motorizados.map(m => `
+      <div class="mot-card" onclick="verDetalle('${m.codigo}')">
+        <div class="mot-nombre">🏍️ ${m.nombre}</div>
+        <div class="mot-info">Código: ${m.codigo} | Moto: ${m.placaMoto}</div>
+        <div class="mot-info">${m.puntos.length} registros hoy — Último: ${m.puntos[m.puntos.length-1]?.tipo} a las ${m.puntos[m.puntos.length-1]?.hora}</div>
+      </div>
+    `).join('');
+    window._adminData = data.motorizados;
+  } catch(e) {
+    document.getElementById('listaMotorizados').innerHTML = '<p style="color:red;font-size:13px">Error de conexión.</p>';
+  }
+}
+
+function verDetalle(codigo) {
+  const mot = window._adminData?.find(m => m.codigo === codigo);
+  if (!mot) return;
+  document.getElementById('detalleNombre').textContent = `📍 ${mot.nombre}`;
+  document.getElementById('detalleMotorizado').style.display = 'block';
+
+  const colores = {login:'#f57c00','Inicio ruta':'#388e3c',Seguimiento:'#1976d2','Fin ruta':'#d32f2f'};
+  document.getElementById('listaPuntos').innerHTML = mot.puntos.map(p => `
+    <div class="punto-item">
+      <div class="punto-dot" style="background:${colores[p.tipo]||'#777'}"></div>
+      <div>
+        <strong>${p.tipo}</strong> — ${p.hora}
+        ${p.placaUnidad ? `<span style="color:#777"> | Unidad: ${p.placaUnidad}</span>` : ''}
+        ${p.foto ? `<a href="${p.foto}" target="_blank" style="color:#1976d2;margin-left:6px">📷 Ver foto</a>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  const puntosMapa = mot.puntos.filter(p => p.lat && p.lng);
+  if (puntosMapa.length) {
+    setTimeout(() => {
+      if (mapaDetalle) { mapaDetalle.remove(); mapaDetalle = null; }
+      mapaDetalle = L.map('mapa-detalle').setView([puntosMapa[0].lat, puntosMapa[0].lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(mapaDetalle);
+      const coords = [];
+      puntosMapa.forEach(p => {
+        const color = colores[p.tipo] || '#777';
+        const marker = L.circleMarker([p.lat, p.lng], {radius:8,fillColor:color,color:'white',weight:2,fillOpacity:1}).addTo(mapaDetalle);
+        marker.bindPopup(`<b>${p.tipo}</b><br>${p.hora}${p.foto?`<br><a href="${p.foto}" target="_blank">📷 Ver foto</a>`:''}`);
+        coords.push([p.lat, p.lng]);
+      });
+      if (coords.length > 1) L.polyline(coords, {color:'#1976d2',weight:2,dashArray:'5,5'}).addTo(mapaDetalle);
+    }, 100);
+  }
+  document.getElementById('detalleMotorizado').scrollIntoView({behavior:'smooth'});
+}
+
+async function cargarMapaGeneral() {
+  if (mapaGeneral) { mapaGeneral.remove(); mapaGeneral = null; }
+  mapaGeneral = L.map('mapa-general').setView([14.6, -90.5], 8);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(mapaGeneral);
+  if (!window._adminData) return;
+  window._adminData.forEach(m => {
+    const ultimos = m.puntos.filter(p => p.lat && p.lng);
+    if (!ultimos.length) return;
+    const ultimo = ultimos[ultimos.length - 1];
+    L.marker([ultimo.lat, ultimo.lng]).addTo(mapaGeneral)
+      .bindPopup(`<b>🏍️ ${m.nombre}</b><br>${ultimo.tipo} — ${ultimo.hora}`);
+  });
+}
+
+function capturarGPS(key, txtId) {
   const btn = event.target;
-  btn.textContent = 'Capturando...';
-  btn.disabled = true;
+  btn.disabled = true; btn.textContent = 'Capturando...';
   navigator.geolocation.getCurrentPosition(
     pos => {
-      gpsLat = pos.coords.latitude.toFixed(6);
-      gpsLng = pos.coords.longitude.toFixed(6);
-      document.getElementById('gpsStatus').textContent = `✅ ${gpsLat}, ${gpsLng}`;
-      document.getElementById('gpsStatus').style.color = '#388e3c';
-      btn.textContent = '✅ Ubicación capturada';
-      btn.disabled = false;
+      gpsData[key] = {lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6)};
+      document.getElementById(txtId).textContent = `✅ ${gpsData[key].lat}, ${gpsData[key].lng}`;
+      document.getElementById(txtId).style.color = '#388e3c';
+      btn.textContent = '✅ Ubicación capturada'; btn.disabled = false;
     },
-    err => {
-      document.getElementById('gpsStatus').textContent = '❌ No se pudo obtener ubicación';
-      document.getElementById('gpsStatus').style.color = '#d32f2f';
-      btn.textContent = 'Reintentar';
-      btn.disabled = false;
+    () => {
+      document.getElementById(txtId).textContent = '❌ No se pudo obtener ubicación';
+      document.getElementById(txtId).style.color = '#d32f2f';
+      btn.textContent = 'Reintentar'; btn.disabled = false;
     },
-    { enableHighAccuracy: true, timeout: 10000 }
+    {enableHighAccuracy:true, timeout:10000}
   );
 }
 
-function previsualizarFoto() {
-  const file = document.getElementById('fotoInput').files[0];
+function previsualizarFoto(inputId, previewId) {
+  const file = document.getElementById(inputId).files[0];
   if (!file) return;
-  
   const reader = new FileReader();
   reader.onload = e => {
     const img = new Image();
@@ -270,86 +530,70 @@ function previsualizarFoto() {
       const canvas = document.createElement('canvas');
       const MAX = 800;
       let w = img.width, h = img.height;
-      if (w > MAX) { h = h * MAX / w; w = MAX; }
+      if (w > MAX) { h = h*MAX/w; w = MAX; }
       canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      fotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
-      document.getElementById('fotoPreview').src = fotoBase64;
-      document.getElementById('fotoPreview').style.display = 'block';
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const preview = document.getElementById(previewId);
+      preview.src = canvas.toDataURL('image/jpeg', 0.7);
+      preview.style.display = 'block';
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-function toggleMotivo() {
-  const val = document.getElementById('rondasRealizadas').value;
-  document.getElementById('motivoDiv').style.display = val === 'No' ? 'block' : 'none';
-}
-
-function toggleIncidente() {
-  const val = document.getElementById('incidenteReportado').value;
-  document.getElementById('seccionIncidente').style.display = val === 'Sí' ? 'block' : 'none';
-}
-
-async function enviarRegistro() {
-  const btn = document.getElementById('btnEnviar');
-  btn.disabled = true;
-  btn.textContent = 'Enviando...';
-  
-  const placa = document.getElementById('placaUnidad').value.trim().toUpperCase();
-  const horaFin = new Date().toTimeString().slice(0,5);
-  
-  const datos = {
-    nombreMotorizado: document.getElementById('nombreMotorizado').value,
-    placaMoto: document.getElementById('placaMoto').value.toUpperCase(),
-    placa: placa,
-    horaInicio: horaInicio,
-    horaFin: horaFin,
-    latitud: gpsLat,
-    longitud: gpsLng,
-    foto: fotoBase64,
-    rondasRealizadas: document.getElementById('rondasRealizadas').value,
-    motivoNoRonda: document.getElementById('motivoNoRonda')?.value || '',
-    incidenteReportado: document.getElementById('incidenteReportado').value,
-    tipoIncidencia: document.getElementById('tipoIncidencia')?.value || '',
-    accionEfectuada: document.getElementById('accionEfectuada')?.value || '',
-    cantidadHeridos: document.getElementById('cantidadHeridos')?.value || '0',
-    cantidadFallecidos: document.getElementById('cantidadFallecidos')?.value || '0',
-    descripcionIncidente: document.getElementById('descripcionIncidente')?.value || '',
-    horaInicioIncidencia: document.getElementById('horaInicioIncidencia')?.value || '',
-    horaFinIncidencia: document.getElementById('horaFinIncidencia')?.value || '',
-    observaciones: document.getElementById('observaciones').value
-  };
-
-  try {
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify(datos)
-    });
-    const msg = document.getElementById('mensaje-estado');
-    msg.textContent = '✅ ¡Registro enviado correctamente!';
-    msg.className = 'exito';
-    msg.style.display = 'block';
-    setTimeout(() => {
-      gpsLat = ''; gpsLng = ''; fotoBase64 = '';
-      document.getElementById('placaUnidad').value = '';
-      document.getElementById('fotoPreview').style.display = 'none';
-      document.getElementById('infoUnidad').style.display = 'none';
-      document.getElementById('gpsStatus').textContent = 'Sin ubicación capturada';
-      irPaso2();
-    }, 3000);
-  } catch(e) {
-    const msg = document.getElementById('mensaje-estado');
-    msg.textContent = '❌ Error al enviar. Intentá de nuevo.';
-    msg.className = 'error';
-    msg.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = '✅ Enviar registro';
+function buscarUnidadInicio() {
+  const placa = document.getElementById('placaUnidadInicio').value.trim().toUpperCase();
+  const u = MAESTRO[placa];
+  if (u) {
+    document.getElementById('iRuta').textContent = u.rutaAsignada||'-';
+    document.getElementById('iOp').textContent = u.operacion||'-';
+    document.getElementById('iUnidadOp').textContent = u.unidadOperativa||'-';
+    document.getElementById('infoUnidadInicio').style.display = 'block';
+  } else {
+    document.getElementById('infoUnidadInicio').style.display = 'none';
   }
 }
 
-cargarMaestro();
+function toggleMotivoFin() {
+  document.getElementById('finMotivoDiv').style.display = document.getElementById('finRondas').value==='No'?'block':'none';
+}
+function toggleIncidenteFin() {
+  document.getElementById('finIncidenteDiv').style.display = document.getElementById('finIncidente').value==='Sí'?'block':'none';
+}
+
+async function cargarMaestro() {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=maestro`);
+    const data = await res.json();
+    if (data.success) data.data.forEach(u => { MAESTRO[u.placa.trim().toUpperCase()] = u; });
+  } catch(e) {}
+}
+
+function cerrarSesion() {
+  if (confirm('¿Seguro que querés cerrar sesión?')) {
+    localStorage.removeItem('sesionGolan');
+    sesion = null;
+    mostrarPaso('pasoLogin');
+    document.getElementById('sesionInfo').textContent = '';
+  }
+}
+
+function verificarSesionGuardada() {
+  const guardada = localStorage.getItem('sesionGolan');
+  if (guardada) {
+    const s = JSON.parse(guardada);
+    if (Date.now() < s.expira) {
+      sesion = s;
+      cargarMaestro().then(() => mostrarPanelMotorizado());
+      return;
+    } else {
+      localStorage.removeItem('sesionGolan');
+    }
+  }
+}
+
+verificarSesionGuardada();
 </script>
 </body>
 </html>
