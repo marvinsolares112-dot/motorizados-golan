@@ -47,13 +47,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
 .mot-info{font-size:11px;color:#777;margin-top:2px}
 .punto-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eee;font-size:12px}
 .punto-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.dot-inicio{background:#388e3c}
-.dot-seg{background:#1976d2}
-.dot-fin{background:#d32f2f}
-.dot-login{background:#f57c00}
 #mapa-detalle{height:280px;border-radius:8px;margin-top:10px}
 #mapa-general{height:320px;border-radius:8px;margin-top:10px}
-.alerta{background:#fff3e0;border:1px solid #f57c00;border-radius:8px;padding:10px;font-size:12px;color:#e65100;margin-top:8px;display:none}
 .sesion-info{font-size:11px;color:rgba(255,255,255,.8);text-align:right}
 </style>
 </head>
@@ -95,7 +90,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
       <button class="btn btn-blue" onclick="irSeguimiento()">📍 Enviar seguimiento</button>
       <button class="btn btn-orange" onclick="irFinalizar()">🔴 Finalizar cobertura</button>
     </div>
-    <div id="alertaRuta" class="alerta"></div>
     <button class="btn btn-gray" onclick="cerrarSesion()" style="margin-top:16px;font-size:12px;padding:8px">Cerrar sesión</button>
   </div>
 </div>
@@ -146,6 +140,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
   <div class="card">
     <div class="badge badge-orange">Finalizar cobertura</div>
     <h2>Cierre de cobertura</h2>
+    <label>📍 Ubicación GPS</label>
+    <button class="btn btn-blue" onclick="capturarGPS('finGps','finGpsTxt')">Capturar ubicación</button>
+    <p class="gps-txt" id="finGpsTxt">Sin ubicación</p>
+    <label>📷 Foto de cierre</label>
+    <input type="file" id="finFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('finFoto','finFotoPreview')">
+    <img id="finFotoPreview" class="foto-preview">
     <label>¿Realizó rondas?</label>
     <select id="finRondas" onchange="toggleMotivoFin()">
       <option value="Sí">Sí</option>
@@ -251,7 +251,6 @@ function mostrarMsg(id, texto, tipo) {
 async function hacerLogin() {
   const codigo = document.getElementById('loginCodigo').value.trim().toUpperCase();
   if (!codigo) { mostrarMsg('loginMsg', 'Ingresá tu código personal.', 'err'); return; }
-
   mostrarMsg('loginMsg', 'Verificando...', 'ok');
   try {
     const res = await fetch(SCRIPT_URL, {
@@ -288,15 +287,14 @@ function mostrarPanelMotorizado() {
   const expira = new Date(sesion.expira);
   document.getElementById('sesionInfo').textContent = `Sesión hasta ${expira.getHours()}:${String(expira.getMinutes()).padStart(2,'0')}`;
   if (sesion.esAdmin) {
-    const btn = document.createElement('button');
-    btn.className = 'btn btn-blue';
-    btn.style.marginTop = '8px';
-    btn.textContent = '🔧 Panel administrador';
-    btn.onclick = () => { mostrarPaso('pasoAdmin'); cargarAdmin(); };
-    const div = document.getElementById('btnIniciarDiv');
     if (!document.getElementById('btnAdmin')) {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-blue';
+      btn.style.marginTop = '8px';
+      btn.textContent = '🔧 Panel administrador';
       btn.id = 'btnAdmin';
-      div.appendChild(btn);
+      btn.onclick = () => { mostrarPaso('pasoAdmin'); cargarAdmin(); };
+      document.getElementById('btnIniciarDiv').appendChild(btn);
     }
   }
   mostrarPaso('pasoMotorizado');
@@ -327,21 +325,20 @@ async function enviarInicioRuta() {
   const placa = document.getElementById('placaUnidadInicio').value.trim().toUpperCase();
   if (!placa) { mostrarMsg('inicioMsg', 'Ingresá la placa de la unidad.', 'err'); return; }
   if (!gpsData.inicioGps) { mostrarMsg('inicioMsg', 'Capturá la ubicación GPS primero.', 'err'); return; }
-
   const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
   try {
+    const fotoSrc = document.getElementById('inicioFotoPreview').src;
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify({
         action: 'iniciarRuta',
-        codigo: sesion.codigo,
         codigoMotorizado: sesion.codigo,
         nombre: sesion.nombre,
         placaMoto: sesion.placaMoto,
         placa,
         latitud: gpsData.inicioGps.lat,
         longitud: gpsData.inicioGps.lng,
-        foto: document.getElementById('inicioFotoPreview').src || ''
+        foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : ''
       })
     });
     const data = await res.json();
@@ -363,6 +360,7 @@ async function enviarSeguimiento() {
   if (!gpsData.segGps) { mostrarMsg('segMsg', 'Capturá la ubicación GPS primero.', 'err'); return; }
   const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
   try {
+    const fotoSrc = document.getElementById('segFotoPreview').src;
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify({
@@ -373,12 +371,18 @@ async function enviarSeguimiento() {
         placa: localStorage.getItem('placaActiva_' + sesion.codigo) || '',
         latitud: gpsData.segGps.lat,
         longitud: gpsData.segGps.lng,
-        foto: document.getElementById('segFotoPreview').src || ''
+        foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : ''
       })
     });
     const data = await res.json();
     mostrarMsg('segMsg', data.success ? `✅ ${data.mensaje}` : data.error, data.success ? 'ok' : 'err');
-    if (data.success) setTimeout(volverPanel, 2000);
+    if (data.success) {
+      gpsData.segGps = null;
+      document.getElementById('segGpsTxt').textContent = 'Sin ubicación';
+      document.getElementById('segGpsTxt').style.color = '#777';
+      document.getElementById('segFotoPreview').style.display = 'none';
+      setTimeout(volverPanel, 2000);
+    }
   } catch(e) {
     mostrarMsg('segMsg', 'Error de conexión.', 'err');
   }
@@ -386,8 +390,10 @@ async function enviarSeguimiento() {
 }
 
 async function enviarFin() {
+  if (!gpsData.finGps) { mostrarMsg('finMsg', 'Capturá la ubicación GPS primero.', 'err'); return; }
   const btn = event.target; btn.disabled = true; btn.textContent = 'Finalizando...';
   try {
+    const fotoSrc = document.getElementById('finFotoPreview').src;
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify({
@@ -396,7 +402,9 @@ async function enviarFin() {
         nombre: sesion.nombre,
         placaMoto: sesion.placaMoto,
         placa: localStorage.getItem('placaActiva_' + sesion.codigo) || '',
-        latitud: '', longitud: '',
+        latitud: gpsData.finGps.lat,
+        longitud: gpsData.finGps.lng,
+        foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : '',
         rondasRealizadas: document.getElementById('finRondas').value,
         motivoNoRonda: document.getElementById('finMotivo')?.value || '',
         incidenteReportado: document.getElementById('finIncidente').value,
@@ -431,7 +439,10 @@ async function cargarAdmin() {
       body: JSON.stringify({action: 'adminMotorizados', codigo: sesion.codigo})
     });
     const data = await res.json();
-    if (!data.success) { document.getElementById('listaMotorizados').innerHTML = '<p style="color:red;font-size:13px">'+data.error+'</p>'; return; }
+    if (!data.success) {
+      document.getElementById('listaMotorizados').innerHTML = '<p style="color:red;font-size:13px">'+data.error+'</p>';
+      return;
+    }
     const lista = document.getElementById('listaMotorizados');
     if (!data.motorizados.length) {
       lista.innerHTML = '<p style="font-size:13px;color:#777">Ningún motorizado activo hoy.</p>';
@@ -455,8 +466,7 @@ function verDetalle(codigo) {
   if (!mot) return;
   document.getElementById('detalleNombre').textContent = `📍 ${mot.nombre}`;
   document.getElementById('detalleMotorizado').style.display = 'block';
-
-  const colores = {login:'#f57c00','Inicio ruta':'#388e3c',Seguimiento:'#1976d2','Fin ruta':'#d32f2f'};
+  const colores = {'login':'#f57c00','Inicio ruta':'#388e3c','Seguimiento':'#1976d2','Fin ruta':'#d32f2f'};
   document.getElementById('listaPuntos').innerHTML = mot.puntos.map(p => `
     <div class="punto-item">
       <div class="punto-dot" style="background:${colores[p.tipo]||'#777'}"></div>
@@ -467,7 +477,6 @@ function verDetalle(codigo) {
       </div>
     </div>
   `).join('');
-
   const puntosMapa = mot.puntos.filter(p => p.lat && p.lng);
   if (puntosMapa.length) {
     setTimeout(() => {
