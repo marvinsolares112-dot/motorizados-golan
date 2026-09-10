@@ -25,6 +25,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
 .btn-green{background:#388e3c;color:white}
 .btn-gray{background:#777;color:white}
 .btn-orange{background:#f57c00;color:white}
+.btn-purple{background:#7b1fa2;color:white}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .info-box{background:#fff8e1;border:1px solid #ffc107;border-radius:8px;padding:10px;margin-top:10px;font-size:12px}
 .info-row{display:flex;justify-content:space-between;margin-bottom:3px}
@@ -34,6 +35,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
 .badge-green{background:#388e3c}
 .badge-blue{background:#1976d2}
 .badge-orange{background:#f57c00}
+.badge-purple{background:#7b1fa2}
 .msg{text-align:center;padding:10px;border-radius:8px;margin-top:10px;font-weight:bold;font-size:13px;display:none}
 .msg-ok{background:#e8f5e9;color:#388e3c}
 .msg-err{background:#ffebee;color:#d32f2f}
@@ -45,11 +47,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
 .mot-card:hover{background:#e3f2fd;border-color:#1976d2}
 .mot-nombre{font-weight:bold;font-size:13px}
 .mot-info{font-size:11px;color:#777;margin-top:2px}
+.reporte-card{background:#fff3e0;border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid #f57c00}
+.reporte-tipo{font-weight:bold;font-size:13px;color:#e65100}
+.reporte-info{font-size:11px;color:#777;margin-top:2px}
 .punto-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eee;font-size:12px}
 .punto-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 #mapa-detalle{height:280px;border-radius:8px;margin-top:10px}
 #mapa-general{height:320px;border-radius:8px;margin-top:10px}
 .sesion-info{font-size:11px;color:rgba(255,255,255,.8);text-align:right}
+.opciones-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 </style>
 </head>
 <body>
@@ -90,11 +96,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
       <button class="btn btn-blue" onclick="irSeguimiento()">📍 Enviar seguimiento</button>
       <button class="btn btn-orange" onclick="irFinalizar()">🔴 Finalizar cobertura</button>
     </div>
-    <button class="btn btn-gray" onclick="cerrarSesion()" style="margin-top:16px;font-size:12px;padding:8px">Cerrar sesión</button>
+    <button class="btn btn-purple" onclick="irReportarNovedad()" style="margin-top:8px">⚠️ Reportar novedad</button>
+    <button class="btn btn-gray" onclick="cerrarSesion()" style="margin-top:8px;font-size:12px;padding:8px">Cerrar sesión</button>
   </div>
 </div>
 
-<!-- INICIAR RUTA -->
+<!-- INICIAR RUTA — PASO 1: PLACA -->
 <div class="step" id="pasoIniciarRuta">
   <div class="card">
     <div class="badge">Iniciar cobertura</div>
@@ -106,6 +113,23 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
       <div class="info-row"><span class="info-label">Operación:</span><span class="info-value" id="iOp"></span></div>
       <div class="info-row"><span class="info-label">Unidad operativa:</span><span class="info-value" id="iUnidadOp"></span></div>
     </div>
+    <div id="opcionesUnidad" style="display:none">
+      <p style="font-size:12px;color:#555;margin-top:12px;margin-bottom:4px;font-weight:bold">¿Qué vas a hacer?</p>
+      <div class="opciones-grid">
+        <button class="btn btn-green" onclick="irFormularioInicio()">🟢 Iniciar cobertura</button>
+        <button class="btn btn-purple" onclick="irReportarNovedadConPlaca()">⚠️ Reportar novedad</button>
+      </div>
+    </div>
+    <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:12px">← Volver</button>
+  </div>
+</div>
+
+<!-- INICIAR RUTA — PASO 2: GPS Y FOTO -->
+<div class="step" id="pasoFormularioInicio">
+  <div class="card">
+    <div class="badge">Iniciar cobertura</div>
+    <h2>Registrar inicio</h2>
+    <div class="info-box" id="infoUnidadInicio2"></div>
     <label>📍 Ubicación GPS</label>
     <button class="btn btn-blue" onclick="capturarGPS('inicioGps','inicioGpsTxt')">Capturar ubicación</button>
     <p class="gps-txt" id="inicioGpsTxt">Sin ubicación</p>
@@ -113,7 +137,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
     <input type="file" id="inicioFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('inicioFoto','inicioFotoPreview')">
     <img id="inicioFotoPreview" class="foto-preview">
     <button class="btn btn-green" onclick="enviarInicioRuta()">✅ Confirmar inicio</button>
-    <button class="btn btn-gray" onclick="volverPanel()">← Volver</button>
+    <button class="btn btn-gray" onclick="mostrarPaso('pasoIniciarRuta')">← Volver</button>
     <div class="msg" id="inicioMsg"></div>
   </div>
 </div>
@@ -165,41 +189,44 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
         <option>Mantenimiento preventivo</option>
       </select>
     </div>
-    <label>¿Hubo incidente?</label>
-    <select id="finIncidente" onchange="toggleIncidenteFin()">
-      <option value="No">No</option>
-      <option value="Sí">Sí</option>
-    </select>
-    <div id="finIncidenteDiv" style="display:none">
-      <label>Tipo de incidencia</label>
-      <select id="finTipoInc">
-        <option value="">Seleccioná</option>
-        <option>Robo</option><option>Hurto</option>
-        <option>Persona sospechosa</option>
-        <option>Vehículo sospechoso</option>
-        <option>Accidente vial</option>
-        <option>Ataque armado</option>
-      </select>
-      <label>Acción efectuada</label>
-      <select id="finAccion">
-        <option value="">Seleccioná</option>
-        <option>Accionó arma</option>
-        <option>Repelió ataque</option>
-        <option>Disuación efectiva</option>
-        <option>N/A</option>
-      </select>
-      <label>Heridos</label>
-      <input type="number" id="finHeridos" value="0" min="0">
-      <label>Fallecidos</label>
-      <input type="number" id="finFallecidos" value="0" min="0">
-      <label>Descripción</label>
-      <textarea id="finDesc" rows="3" placeholder="Describí el incidente..."></textarea>
-    </div>
     <label>Observaciones</label>
     <textarea id="finObs" rows="2" placeholder="Opcional..."></textarea>
     <button class="btn btn-orange" onclick="enviarFin()">🔴 Finalizar cobertura</button>
     <button class="btn btn-gray" onclick="volverPanel()">← Volver</button>
     <div class="msg" id="finMsg"></div>
+  </div>
+</div>
+
+<!-- REPORTAR NOVEDAD -->
+<div class="step" id="pasoReportarNovedad">
+  <div class="card">
+    <div class="badge badge-purple">⚠️ Reportar novedad</div>
+    <h2>Registrar novedad en ruta</h2>
+    <label>Placa de la unidad afectada</label>
+    <input type="text" id="novedadPlaca" placeholder="Ej: C-251BZV" style="text-transform:uppercase">
+    <label>Tipo de novedad</label>
+    <select id="novedadTipo">
+      <option value="">Seleccioná el tipo</option>
+      <option>Falla mecánica</option>
+      <option>Pinchazo</option>
+      <option>Accidente vial</option>
+      <option>Problema de combustible</option>
+      <option>Zona de riesgo</option>
+      <option>Unidad retenida</option>
+      <option>Emergencia personal</option>
+      <option>Otro</option>
+    </select>
+    <label>📍 Ubicación GPS</label>
+    <button class="btn btn-blue" onclick="capturarGPS('novGps','novGpsTxt')">Capturar ubicación</button>
+    <p class="gps-txt" id="novGpsTxt">Sin ubicación</p>
+    <label>📷 Foto de evidencia</label>
+    <input type="file" id="novFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('novFoto','novFotoPreview')">
+    <img id="novFotoPreview" class="foto-preview">
+    <label>Descripción</label>
+    <textarea id="novedadDesc" rows="3" placeholder="Describí lo que ocurrió..."></textarea>
+    <button class="btn btn-purple" onclick="enviarNovedad()">⚠️ Enviar reporte</button>
+    <button class="btn btn-gray" onclick="volverPanel()">← Volver</button>
+    <div class="msg" id="novMsg"></div>
   </div>
 </div>
 
@@ -209,6 +236,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
     <div class="badge badge-blue">Panel administrador</div>
     <h2>Control de motorizados</h2>
     <button class="btn btn-blue" onclick="cargarAdmin()">🔄 Actualizar</button>
+    <button class="btn btn-purple" onclick="cargarReportes()" style="margin-top:8px">⚠️ Ver reportes del día</button>
     <div id="listaMotorizados" style="margin-top:12px"></div>
     <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:8px">← Volver</button>
   </div>
@@ -216,6 +244,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
     <h2 id="detalleNombre">Detalle</h2>
     <div id="listaPuntos"></div>
     <div id="mapa-detalle"></div>
+  </div>
+  <div class="card" id="seccionReportes" style="display:none">
+    <h2>⚠️ Reportes del día</h2>
+    <div id="listaReportes"></div>
   </div>
   <div class="card">
     <h2>Mapa general — todos activos</h2>
@@ -234,6 +266,7 @@ let sesion = null;
 let gpsData = {};
 let mapaDetalle = null;
 let mapaGeneral = null;
+let placaSeleccionada = "";
 
 function mostrarPaso(id) {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
@@ -316,14 +349,57 @@ function verificarRutaActiva() {
   }
 }
 
-function irIniciarRuta() { mostrarPaso('pasoIniciarRuta'); }
+function irIniciarRuta() {
+  document.getElementById('placaUnidadInicio').value = '';
+  document.getElementById('infoUnidadInicio').style.display = 'none';
+  document.getElementById('opcionesUnidad').style.display = 'none';
+  mostrarPaso('pasoIniciarRuta');
+}
+
 function irSeguimiento() { mostrarPaso('pasoSeguimiento'); }
 function irFinalizar() { mostrarPaso('pasoFinalizar'); }
 function volverPanel() { mostrarPaso('pasoMotorizado'); verificarRutaActiva(); }
 
-async function enviarInicioRuta() {
+function irReportarNovedad() {
+  document.getElementById('novedadPlaca').value = '';
+  mostrarPaso('pasoReportarNovedad');
+}
+
+function irReportarNovedadConPlaca() {
+  document.getElementById('novedadPlaca').value = placaSeleccionada;
+  mostrarPaso('pasoReportarNovedad');
+}
+
+function irFormularioInicio() {
+  const u = MAESTRO[placaSeleccionada];
+  document.getElementById('infoUnidadInicio2').innerHTML = u ? `
+    <div class="info-row"><span class="info-label">Placa:</span><span class="info-value">${placaSeleccionada}</span></div>
+    <div class="info-row"><span class="info-label">Ruta:</span><span class="info-value">${u.rutaAsignada||'-'}</span></div>
+    <div class="info-row"><span class="info-label">Operación:</span><span class="info-value">${u.operacion||'-'}</span></div>
+  ` : `<div class="info-row"><span class="info-label">Placa:</span><span class="info-value">${placaSeleccionada}</span></div>`;
+  mostrarPaso('pasoFormularioInicio');
+}
+
+function buscarUnidadInicio() {
   const placa = document.getElementById('placaUnidadInicio').value.trim().toUpperCase();
-  if (!placa) { mostrarMsg('inicioMsg', 'Ingresá la placa de la unidad.', 'err'); return; }
+  placaSeleccionada = placa;
+  const u = MAESTRO[placa];
+  if (u) {
+    document.getElementById('iRuta').textContent = u.rutaAsignada||'-';
+    document.getElementById('iOp').textContent = u.operacion||'-';
+    document.getElementById('iUnidadOp').textContent = u.unidadOperativa||'-';
+    document.getElementById('infoUnidadInicio').style.display = 'block';
+    document.getElementById('opcionesUnidad').style.display = 'block';
+  } else if (placa.length >= 6) {
+    document.getElementById('infoUnidadInicio').style.display = 'none';
+    document.getElementById('opcionesUnidad').style.display = 'block';
+  } else {
+    document.getElementById('infoUnidadInicio').style.display = 'none';
+    document.getElementById('opcionesUnidad').style.display = 'none';
+  }
+}
+
+async function enviarInicioRuta() {
   if (!gpsData.inicioGps) { mostrarMsg('inicioMsg', 'Capturá la ubicación GPS primero.', 'err'); return; }
   const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
   try {
@@ -335,7 +411,7 @@ async function enviarInicioRuta() {
         codigoMotorizado: sesion.codigo,
         nombre: sesion.nombre,
         placaMoto: sesion.placaMoto,
-        placa,
+        placa: placaSeleccionada,
         latitud: gpsData.inicioGps.lat,
         longitud: gpsData.inicioGps.lng,
         foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : ''
@@ -343,8 +419,8 @@ async function enviarInicioRuta() {
     });
     const data = await res.json();
     if (data.success) {
-      localStorage.setItem('rutaActiva_' + sesion.codigo, placa);
-      localStorage.setItem('placaActiva_' + sesion.codigo, placa);
+      localStorage.setItem('rutaActiva_' + sesion.codigo, placaSeleccionada);
+      localStorage.setItem('placaActiva_' + sesion.codigo, placaSeleccionada);
       mostrarMsg('inicioMsg', `✅ ${data.mensaje}`, 'ok');
       setTimeout(volverPanel, 2000);
     } else {
@@ -407,12 +483,6 @@ async function enviarFin() {
         foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : '',
         rondasRealizadas: document.getElementById('finRondas').value,
         motivoNoRonda: document.getElementById('finMotivo')?.value || '',
-        incidenteReportado: document.getElementById('finIncidente').value,
-        tipoIncidencia: document.getElementById('finTipoInc')?.value || '',
-        accionEfectuada: document.getElementById('finAccion')?.value || '',
-        cantidadHeridos: document.getElementById('finHeridos')?.value || '0',
-        cantidadFallecidos: document.getElementById('finFallecidos')?.value || '0',
-        descripcionIncidente: document.getElementById('finDesc')?.value || '',
         observaciones: document.getElementById('finObs').value
       })
     });
@@ -431,6 +501,81 @@ async function enviarFin() {
   btn.disabled = false; btn.textContent = '🔴 Finalizar cobertura';
 }
 
+async function enviarNovedad() {
+  const placa = document.getElementById('novedadPlaca').value.trim().toUpperCase();
+  const tipo = document.getElementById('novedadTipo').value;
+  if (!placa) { mostrarMsg('novMsg', 'Ingresá la placa de la unidad afectada.', 'err'); return; }
+  if (!tipo) { mostrarMsg('novMsg', 'Seleccioná el tipo de novedad.', 'err'); return; }
+  if (!gpsData.novGps) { mostrarMsg('novMsg', 'Capturá la ubicación GPS primero.', 'err'); return; }
+  const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const fotoSrc = document.getElementById('novFotoPreview').src;
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'reportarNovedad',
+        codigoMotorizado: sesion.codigo,
+        nombre: sesion.nombre,
+        placaMoto: sesion.placaMoto,
+        placaUnidad: placa,
+        tipoNovedad: tipo,
+        descripcion: document.getElementById('novedadDesc').value,
+        latitud: gpsData.novGps.lat,
+        longitud: gpsData.novGps.lng,
+        foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : ''
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      mostrarMsg('novMsg', `✅ Novedad reportada a las ${data.hora}`, 'ok');
+      document.getElementById('novedadPlaca').value = '';
+      document.getElementById('novedadTipo').value = '';
+      document.getElementById('novedadDesc').value = '';
+      document.getElementById('novFotoPreview').style.display = 'none';
+      gpsData.novGps = null;
+      document.getElementById('novGpsTxt').textContent = 'Sin ubicación';
+      setTimeout(volverPanel, 2500);
+    } else {
+      mostrarMsg('novMsg', data.error, 'err');
+    }
+  } catch(e) {
+    mostrarMsg('novMsg', 'Error de conexión.', 'err');
+  }
+  btn.disabled = false; btn.textContent = '⚠️ Enviar reporte';
+}
+
+async function cargarReportes() {
+  document.getElementById('seccionReportes').style.display = 'block';
+  document.getElementById('listaReportes').innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({action: 'adminReportes', codigo: sesion.codigo})
+    });
+    const data = await res.json();
+    if (!data.success) {
+      document.getElementById('listaReportes').innerHTML = `<p style="color:red;font-size:13px">${data.error}</p>`;
+      return;
+    }
+    if (!data.reportes.length) {
+      document.getElementById('listaReportes').innerHTML = '<p style="font-size:13px;color:#777">Sin reportes hoy. ✅</p>';
+      return;
+    }
+    document.getElementById('listaReportes').innerHTML = data.reportes.map(r => `
+      <div class="reporte-card">
+        <div class="reporte-tipo">⚠️ ${r.tipoNovedad}</div>
+        <div class="reporte-info">🏍️ ${r.nombre} (${r.codigo}) — ${r.hora}</div>
+        <div class="reporte-info">🚛 Unidad afectada: <strong>${r.placaUnidad}</strong></div>
+        ${r.descripcion ? `<div class="reporte-info">📝 ${r.descripcion}</div>` : ''}
+        ${r.lat ? `<div class="reporte-info">📍 ${r.lat}, ${r.lng}</div>` : ''}
+        ${r.foto ? `<div class="reporte-info"><a href="${r.foto}" target="_blank" style="color:#7b1fa2">📷 Ver foto</a></div>` : ''}
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('listaReportes').innerHTML = '<p style="color:red;font-size:13px">Error de conexión.</p>';
+  }
+}
+
 async function cargarAdmin() {
   document.getElementById('listaMotorizados').innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
   try {
@@ -440,7 +585,7 @@ async function cargarAdmin() {
     });
     const data = await res.json();
     if (!data.success) {
-      document.getElementById('listaMotorizados').innerHTML = '<p style="color:red;font-size:13px">'+data.error+'</p>';
+      document.getElementById('listaMotorizados').innerHTML = `<p style="color:red;font-size:13px">${data.error}</p>`;
       return;
     }
     const lista = document.getElementById('listaMotorizados');
@@ -469,7 +614,7 @@ function verDetalle(codigo) {
   const colores = {'login':'#f57c00','Inicio ruta':'#388e3c','Seguimiento':'#1976d2','Fin ruta':'#d32f2f'};
   document.getElementById('listaPuntos').innerHTML = mot.puntos.map(p => `
     <div class="punto-item">
-      <div class="punto-dot" style="background:${colores[p.tipo]||'#777'}"></div>
+      <div class="punto-dot" style="background:${colores[p.tipo]||'#7b1fa2'}"></div>
       <div>
         <strong>${p.tipo}</strong> — ${p.hora}
         ${p.placaUnidad ? `<span style="color:#777"> | Unidad: ${p.placaUnidad}</span>` : ''}
@@ -485,7 +630,7 @@ function verDetalle(codigo) {
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(mapaDetalle);
       const coords = [];
       puntosMapa.forEach(p => {
-        const color = colores[p.tipo] || '#777';
+        const color = colores[p.tipo] || '#7b1fa2';
         const marker = L.circleMarker([p.lat, p.lng], {radius:8,fillColor:color,color:'white',weight:2,fillOpacity:1}).addTo(mapaDetalle);
         marker.bindPopup(`<b>${p.tipo}</b><br>${p.hora}${p.foto?`<br><a href="${p.foto}" target="_blank">📷 Ver foto</a>`:''}`);
         coords.push([p.lat, p.lng]);
@@ -551,24 +696,8 @@ function previsualizarFoto(inputId, previewId) {
   reader.readAsDataURL(file);
 }
 
-function buscarUnidadInicio() {
-  const placa = document.getElementById('placaUnidadInicio').value.trim().toUpperCase();
-  const u = MAESTRO[placa];
-  if (u) {
-    document.getElementById('iRuta').textContent = u.rutaAsignada||'-';
-    document.getElementById('iOp').textContent = u.operacion||'-';
-    document.getElementById('iUnidadOp').textContent = u.unidadOperativa||'-';
-    document.getElementById('infoUnidadInicio').style.display = 'block';
-  } else {
-    document.getElementById('infoUnidadInicio').style.display = 'none';
-  }
-}
-
 function toggleMotivoFin() {
   document.getElementById('finMotivoDiv').style.display = document.getElementById('finRondas').value==='No'?'block':'none';
-}
-function toggleIncidenteFin() {
-  document.getElementById('finIncidenteDiv').style.display = document.getElementById('finIncidente').value==='Sí'?'block':'none';
 }
 
 async function cargarMaestro() {
