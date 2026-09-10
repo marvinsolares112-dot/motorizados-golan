@@ -150,7 +150,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
   </div>
 </div>
 
-<!-- FINALIZAR -->
+<!-- FINALIZAR COBERTURA -->
 <div class="step" id="pasoFinalizar">
   <div class="card">
     <div class="badge badge-orange">Finalizar cobertura</div>
@@ -221,7 +221,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
   </div>
 </div>
 
-<!-- POST NOVEDAD — Qué hacés ahora -->
+<!-- POST NOVEDAD -->
 <div class="step" id="pasoPostNovedad">
   <div class="card">
     <div class="badge badge-purple">Novedad reportada ⚠️</div>
@@ -229,6 +229,24 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
     <div class="novedad-banner" id="resumenNovedad"></div>
     <div id="opcionesPostNovedad" style="margin-top:8px"></div>
     <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:8px">← Volver al panel</button>
+  </div>
+</div>
+
+<!-- FINALIZAR INCIDENTE — GPS + FOTO -->
+<div class="step" id="pasoFinalizarIncidente">
+  <div class="card">
+    <div class="badge badge-green">Finalizar incidente</div>
+    <h2>¿Dónde se resolvió?</h2>
+    <p style="font-size:13px;color:#555;margin-top:4px;margin-bottom:8px">Capturá tu ubicación y una foto del lugar donde se resolvió el incidente.</p>
+    <label>📍 Ubicación GPS</label>
+    <button class="btn btn-blue" onclick="capturarGPS('finIncGps','finIncGpsTxt')">Capturar ubicación</button>
+    <p class="gps-txt" id="finIncGpsTxt">Sin ubicación</p>
+    <label>📷 Foto de cierre del incidente</label>
+    <input type="file" id="finIncFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('finIncFoto','finIncFotoPreview')">
+    <img id="finIncFotoPreview" class="foto-preview">
+    <button class="btn btn-green" id="btnConfirmarFinInc" onclick="confirmarFinalizarIncidente()">✅ Confirmar — incidente resuelto</button>
+    <button class="btn btn-gray" onclick="mostrarPaso('pasoPostNovedad')">← Volver</button>
+    <div class="msg" id="finIncMsg"></div>
   </div>
 </div>
 
@@ -284,6 +302,7 @@ let mapaGeneral = null;
 let placaSeleccionada = "";
 let novedadActiva = null;
 let vieneDePasoAnterior = "";
+let finIncidenteTeniaRuta = false;
 
 function mostrarPaso(id) {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
@@ -340,27 +359,23 @@ function actualizarBotonesPanel() {
   const banner = document.getElementById('novedadBanner');
 
   if (novedadActiva) {
-    // Tiene novedad activa — mostrar opciones de resolver
     badge.textContent = '⚠️ Novedad activa';
     badge.style.background = '#7b1fa2';
     banner.style.display = 'block';
     banner.innerHTML = `⚠️ <strong>${novedadActiva.tipo}</strong> — Unidad: ${novedadActiva.placa} (${novedadActiva.hora})`;
 
     if (novedadActiva.teniaRuta) {
-      // Caso 3: tenía ruta activa cuando reportó → reanudar continúa la ruta
       botonesDiv.innerHTML = `
-        <button class="btn btn-green" onclick="reanudarConRuta()" style="margin-top:10px">🟢 Se resolvió — Continuar cobertura</button>
+        <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:10px">🟢 Se resolvió — Continuar cobertura</button>
         <button class="btn btn-red" onclick="mostrarPaso('pasoFinSinCobertura')">🔴 No se resolvió — Finalizar</button>
       `;
     } else {
-      // Caso 2: no tenía ruta → reanudar va a iniciar cobertura
       botonesDiv.innerHTML = `
-        <button class="btn btn-green" onclick="reanudarSinRuta()" style="margin-top:10px">🟢 Se resolvió — Iniciar cobertura</button>
+        <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:10px">🟢 Se resolvió — Iniciar cobertura</button>
         <button class="btn btn-red" onclick="mostrarPaso('pasoFinSinCobertura')">🔴 No se resolvió — Finalizar sin cobertura</button>
       `;
     }
   } else if (rutaActiva) {
-    // Tiene ruta activa sin novedad
     badge.textContent = '🟢 Ruta activa — ' + rutaActiva;
     badge.style.background = '#388e3c';
     banner.style.display = 'none';
@@ -371,7 +386,6 @@ function actualizarBotonesPanel() {
       ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cargarAdmin()" style="margin-top:8px">🔧 Panel administrador</button>' : ''}
     `;
   } else {
-    // Sin ruta activa
     badge.textContent = 'Sin ruta activa';
     badge.style.background = '#d32f2f';
     banner.style.display = 'none';
@@ -380,6 +394,55 @@ function actualizarBotonesPanel() {
       ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cargarAdmin()" style="margin-top:8px">🔧 Panel administrador</button>' : ''}
     `;
   }
+}
+
+function irFinalizarIncidente(teniaRuta) {
+  finIncidenteTeniaRuta = teniaRuta;
+  gpsData.finIncGps = null;
+  document.getElementById('finIncGpsTxt').textContent = 'Sin ubicación';
+  document.getElementById('finIncGpsTxt').style.color = '#777';
+  document.getElementById('finIncFotoPreview').style.display = 'none';
+  document.getElementById('finIncMsg').style.display = 'none';
+  mostrarPaso('pasoFinalizarIncidente');
+}
+
+async function confirmarFinalizarIncidente() {
+  if (!gpsData.finIncGps) { mostrarMsg('finIncMsg', 'Capturá la ubicación GPS primero.', 'err'); return; }
+  const btn = document.getElementById('btnConfirmarFinInc');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+
+  try {
+    const fotoSrc = document.getElementById('finIncFotoPreview').src;
+    // Enviar reanudación al servidor con GPS y foto
+    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
+      action: 'reanudarRuta',
+      codigoMotorizado: sesion.codigo, nombre: sesion.nombre,
+      placaMoto: sesion.placaMoto, placaUnidad: novedadActiva?.placa || '',
+      teniaRuta: finIncidenteTeniaRuta,
+      latitud: gpsData.finIncGps.lat, longitud: gpsData.finIncGps.lng,
+      foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : ''
+    })});
+    const data = await res.json();
+    if (data.success) {
+      localStorage.removeItem('novedad_' + sesion.codigo);
+      novedadActiva = null;
+
+      if (finIncidenteTeniaRuta) {
+        // Caso 3: tenía ruta → vuelve al panel con ruta activa
+        mostrarMsg('finIncMsg', '✅ Incidente resuelto — Continuás con la cobertura', 'ok');
+        setTimeout(volverPanel, 2000);
+      } else {
+        // Caso 2: no tenía ruta → va a iniciar cobertura
+        mostrarMsg('finIncMsg', '✅ Incidente resuelto — Ahora iniciá la cobertura', 'ok');
+        setTimeout(() => {
+          placaSeleccionada = novedadActiva?.placa || placaSeleccionada;
+          vieneDePasoAnterior = 'finalizarIncidente';
+          prepararPantallaInicio();
+        }, 2000);
+      }
+    } else { mostrarMsg('finIncMsg', data.error, 'err'); }
+  } catch(e) { mostrarMsg('finIncMsg', 'Error de conexión.', 'err'); }
+  btn.disabled = false; btn.textContent = '✅ Confirmar — incidente resuelto';
 }
 
 function irSeleccionarPlaca() {
@@ -391,7 +454,6 @@ function irSeleccionarPlaca() {
 }
 
 function irNovedadConRuta() {
-  // Tiene ruta activa → ya sabe la placa
   placaSeleccionada = localStorage.getItem('placaActiva_' + sesion.codigo) || '';
   const u = MAESTRO[placaSeleccionada];
   document.getElementById('infoNovedadResumen').innerHTML = `
@@ -426,22 +488,12 @@ function irInicioCobertura() {
   prepararPantallaInicio();
 }
 
-function reanudarSinRuta() {
-  // Caso 2: tenía novedad sin ruta → va a iniciar cobertura con la placa guardada
-  placaSeleccionada = novedadActiva.placa;
-  vieneDePasoAnterior = 'pasoPostNovedad';
-  prepararPantallaInicio();
-}
-
-function reanudarConRuta() {
-  // Caso 3: tenía ruta activa → confirma reanudación y vuelve al panel
-  enviarReanudar();
-}
-
 function prepararPantallaInicio() {
-  const u = MAESTRO[placaSeleccionada];
+  const placa = novedadActiva?.placa || placaSeleccionada;
+  placaSeleccionada = placa;
+  const u = MAESTRO[placa];
   document.getElementById('infoInicioResumen').innerHTML = `
-    <div class="info-row"><span class="info-label">Placa:</span><span class="info-value">${placaSeleccionada}</span></div>
+    <div class="info-row"><span class="info-label">Placa:</span><span class="info-value">${placa}</span></div>
     ${u ? `<div class="info-row"><span class="info-label">Ruta:</span><span class="info-value">${u.rutaAsignada||'-'}</span></div>
     <div class="info-row"><span class="info-label">Operación:</span><span class="info-value">${u.operacion||'-'}</span></div>` : ''}
   `;
@@ -453,7 +505,6 @@ function prepararPantallaInicio() {
 }
 
 function irNovedad() {
-  // Viene de seleccionar placa sin ruta activa
   const u = MAESTRO[placaSeleccionada];
   document.getElementById('infoNovedadResumen').innerHTML = `
     <div class="info-row"><span class="info-label">Unidad afectada:</span><span class="info-value">${placaSeleccionada}</span></div>
@@ -473,8 +524,8 @@ function limpiarFormularioNovedad() {
 }
 
 function irAtras() {
-  if (vieneDePasoAnterior === 'pasoPostNovedad') {
-    mostrarPaso('pasoPostNovedad');
+  if (vieneDePasoAnterior === 'finalizarIncidente') {
+    mostrarPaso('pasoFinalizarIncidente');
   } else {
     mostrarPaso('pasoSeleccionarPlaca');
   }
@@ -491,18 +542,14 @@ async function enviarInicioRuta() {
   try {
     const fotoSrc = document.getElementById('inicioFotoPreview').src;
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
-      action: 'iniciarRuta',
-      codigoMotorizado: sesion.codigo, nombre: sesion.nombre,
-      placaMoto: sesion.placaMoto, placa: placaSeleccionada,
-      latitud: gpsData.inicioGps.lat, longitud: gpsData.inicioGps.lng,
+      action: 'iniciarRuta', codigoMotorizado: sesion.codigo,
+      nombre: sesion.nombre, placaMoto: sesion.placaMoto,
+      placa: placaSeleccionada, latitud: gpsData.inicioGps.lat,
+      longitud: gpsData.inicioGps.lng,
       foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : ''
     })});
     const data = await res.json();
     if (data.success) {
-      // Si venía de una novedad, cerrar la novedad primero
-      if (novedadActiva && vieneDePasoAnterior === 'pasoPostNovedad') {
-        await cerrarNovedadEnSheet();
-      }
       localStorage.setItem('rutaActiva_' + sesion.codigo, placaSeleccionada);
       localStorage.setItem('placaActiva_' + sesion.codigo, placaSeleccionada);
       localStorage.removeItem('novedad_' + sesion.codigo);
@@ -514,29 +561,14 @@ async function enviarInicioRuta() {
   btn.disabled = false; btn.textContent = '✅ Confirmar inicio';
 }
 
-async function cerrarNovedadEnSheet() {
-  // Cierra la novedad en la hoja Reportes cuando inicia después de resolverla
-  try {
-    await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
-      action: 'reanudarRuta',
-      codigoMotorizado: sesion.codigo,
-      nombre: sesion.nombre,
-      placaMoto: sesion.placaMoto,
-      placaUnidad: novedadActiva?.placa || '',
-      teniaRuta: false
-    })});
-  } catch(e) {}
-}
-
 async function enviarSeguimiento() {
   if (!gpsData.segGps) { mostrarMsg('segMsg', 'Capturá la ubicación GPS primero.', 'err'); return; }
   const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
   try {
     const fotoSrc = document.getElementById('segFotoPreview').src;
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
-      action: 'seguimiento',
-      codigoMotorizado: sesion.codigo, nombre: sesion.nombre,
-      placaMoto: sesion.placaMoto,
+      action: 'seguimiento', codigoMotorizado: sesion.codigo,
+      nombre: sesion.nombre, placaMoto: sesion.placaMoto,
       placa: localStorage.getItem('placaActiva_' + sesion.codigo) || '',
       latitud: gpsData.segGps.lat, longitud: gpsData.segGps.lng,
       foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : ''
@@ -560,9 +592,8 @@ async function enviarFin() {
   try {
     const fotoSrc = document.getElementById('finFotoPreview').src;
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
-      action: 'finalizarRuta',
-      codigoMotorizado: sesion.codigo, nombre: sesion.nombre,
-      placaMoto: sesion.placaMoto,
+      action: 'finalizarRuta', codigoMotorizado: sesion.codigo,
+      nombre: sesion.nombre, placaMoto: sesion.placaMoto,
       placa: localStorage.getItem('placaActiva_' + sesion.codigo) || '',
       latitud: gpsData.finGps.lat, longitud: gpsData.finGps.lng,
       foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : '',
@@ -592,32 +623,29 @@ async function enviarNovedad() {
     const fotoSrc = document.getElementById('novFotoPreview').src;
     const teniaRuta = !!localStorage.getItem('rutaActiva_' + sesion.codigo);
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
-      action: 'reportarNovedad',
-      codigoMotorizado: sesion.codigo, nombre: sesion.nombre,
-      placaMoto: sesion.placaMoto, placaUnidad: placaSeleccionada,
-      tipoNovedad: tipo,
+      action: 'reportarNovedad', codigoMotorizado: sesion.codigo,
+      nombre: sesion.nombre, placaMoto: sesion.placaMoto,
+      placaUnidad: placaSeleccionada, tipoNovedad: tipo,
       descripcion: document.getElementById('novedadDesc').value,
       latitud: gpsData.novGps.lat, longitud: gpsData.novGps.lng,
       foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : ''
     })});
     const data = await res.json();
     if (data.success) {
-      // Guardar novedad con flag de si tenía ruta activa
       novedadActiva = {tipo, placa: placaSeleccionada, hora: data.hora, teniaRuta};
       localStorage.setItem('novedad_' + sesion.codigo, JSON.stringify(novedadActiva));
 
-      // Mostrar pantalla post-novedad con opciones según si tenía ruta
       document.getElementById('resumenNovedad').innerHTML =
         `⚠️ <strong>${tipo}</strong> reportada a las ${data.hora}<br>Unidad afectada: <strong>${placaSeleccionada}</strong>`;
 
       if (teniaRuta) {
         document.getElementById('opcionesPostNovedad').innerHTML = `
-          <button class="btn btn-green" onclick="reanudarConRuta()" style="margin-top:8px">🟢 Se resolvió — Continuar cobertura</button>
+          <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:8px">🟢 Se resolvió — Continuar cobertura</button>
           <button class="btn btn-red" onclick="mostrarPaso('pasoFinSinCobertura')">🔴 No se resolvió — Finalizar</button>
         `;
       } else {
         document.getElementById('opcionesPostNovedad').innerHTML = `
-          <button class="btn btn-green" onclick="reanudarSinRuta()" style="margin-top:8px">🟢 Se resolvió — Iniciar cobertura</button>
+          <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:8px">🟢 Se resolvió — Iniciar cobertura</button>
           <button class="btn btn-red" onclick="mostrarPaso('pasoFinSinCobertura')">🔴 No se resolvió — Finalizar sin cobertura</button>
         `;
       }
@@ -627,31 +655,12 @@ async function enviarNovedad() {
   btn.disabled = false; btn.textContent = '⚠️ Enviar reporte';
 }
 
-async function enviarReanudar() {
-  try {
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
-      action: 'reanudarRuta',
-      codigoMotorizado: sesion.codigo, nombre: sesion.nombre,
-      placaMoto: sesion.placaMoto,
-      placaUnidad: novedadActiva?.placa || '',
-      teniaRuta: true
-    })});
-    const data = await res.json();
-    if (data.success) {
-      localStorage.removeItem('novedad_' + sesion.codigo);
-      novedadActiva = null;
-      volverPanel();
-    }
-  } catch(e) {}
-}
-
 async function enviarFinSinCobertura() {
   const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
   try {
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
-      action: 'finalizarSinCobertura',
-      codigoMotorizado: sesion.codigo, nombre: sesion.nombre,
-      placaMoto: sesion.placaMoto,
+      action: 'finalizarSinCobertura', codigoMotorizado: sesion.codigo,
+      nombre: sesion.nombre, placaMoto: sesion.placaMoto,
       placaUnidad: novedadActiva?.placa || '',
       tipoNovedad: novedadActiva?.tipo || '',
       observaciones: document.getElementById('finSinObs').value
