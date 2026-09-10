@@ -107,9 +107,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
       <div class="info-row"><span class="info-label">Operación:</span><span class="info-value" id="pOp"></span></div>
       <div class="info-row"><span class="info-label">Unidad operativa:</span><span class="info-value" id="pUnidadOp"></span></div>
     </div>
+    <p class="gps-txt" id="placaNoRegistrada" style="display:none;color:#d32f2f">⚠️ Esta placa no está registrada. Solo podés iniciar cobertura, no reportar novedad.</p>
     <div id="botonesPlaca" style="display:none" class="grid2">
       <button class="btn btn-green" onclick="irInicioCobertura()">🟢 Iniciar cobertura</button>
-      <button class="btn btn-purple" onclick="irNovedad()">⚠️ Reportar novedad</button>
+      <button class="btn btn-purple" id="btnRepNovedad" onclick="irNovedad()">⚠️ Reportar novedad</button>
     </div>
     <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:12px">← Volver</button>
   </div>
@@ -124,7 +125,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
     <label>📍 Ubicación GPS</label>
     <button class="btn btn-blue" onclick="capturarGPS('inicioGps','inicioGpsTxt')">Capturar ubicación</button>
     <p class="gps-txt" id="inicioGpsTxt">Sin ubicación</p>
-    <label>📷 Foto de la unidad</label>
+    <label>📷 Foto de la unidad (obligatoria)</label>
     <input type="file" id="inicioFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('inicioFoto','inicioFotoPreview')">
     <img id="inicioFotoPreview" class="foto-preview">
     <button class="btn btn-green" onclick="enviarInicioRuta()">✅ Confirmar inicio</button>
@@ -380,9 +381,9 @@ function actualizarBotonesPanel() {
     badge.style.background = '#388e3c';
     banner.style.display = 'none';
     botonesDiv.innerHTML = `
-      <button class="btn btn-blue" onclick="mostrarPaso('pasoSeguimiento')" style="margin-top:10px">📍 Enviar seguimiento</button>
+      <button class="btn btn-blue" onclick="irEnviarSeguimiento()" style="margin-top:10px">📍 Enviar seguimiento</button>
       <button class="btn btn-purple" onclick="irNovedadConRuta()">⚠️ Reportar novedad</button>
-      <button class="btn btn-orange" onclick="mostrarPaso('pasoFinalizar')">🔴 Finalizar cobertura</button>
+      <button class="btn btn-orange" onclick="irFinalizarCobertura()">🔴 Finalizar cobertura</button>
       ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cargarAdmin()" style="margin-top:8px">🔧 Panel administrador</button>' : ''}
     `;
   } else {
@@ -401,6 +402,8 @@ function irFinalizarIncidente(teniaRuta) {
   gpsData.finIncGps = null;
   document.getElementById('finIncGpsTxt').textContent = 'Sin ubicación';
   document.getElementById('finIncGpsTxt').style.color = '#777';
+  document.getElementById('finIncFoto').value = '';
+  document.getElementById('finIncFotoPreview').src = '';
   document.getElementById('finIncFotoPreview').style.display = 'none';
   document.getElementById('finIncMsg').style.display = 'none';
   mostrarPaso('pasoFinalizarIncidente');
@@ -413,7 +416,6 @@ async function confirmarFinalizarIncidente() {
 
   try {
     const fotoSrc = document.getElementById('finIncFotoPreview').src;
-    // Enviar reanudación al servidor con GPS y foto
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
       action: 'reanudarRuta',
       codigoMotorizado: sesion.codigo, nombre: sesion.nombre,
@@ -424,21 +426,21 @@ async function confirmarFinalizarIncidente() {
     })});
     const data = await res.json();
     if (data.success) {
-      localStorage.removeItem('novedad_' + sesion.codigo);
-      novedadActiva = null;
-
       if (finIncidenteTeniaRuta) {
-        // Caso 3: tenía ruta → vuelve al panel con ruta activa
+        localStorage.removeItem('novedad_' + sesion.codigo);
+        novedadActiva = null;
         mostrarMsg('finIncMsg', '✅ Incidente resuelto — Continuás con la cobertura', 'ok');
         setTimeout(volverPanel, 2000);
       } else {
-        // Caso 2: no tenía ruta → va a iniciar cobertura
+        // Guardamos la hora de fin del incidente para incluirla al iniciar la ruta
+        novedadActiva.horaFinIncidente = data.hora;
+        localStorage.setItem('novedad_' + sesion.codigo, JSON.stringify(novedadActiva));
         mostrarMsg('finIncMsg', '✅ Incidente resuelto — Ahora iniciá la cobertura', 'ok');
         setTimeout(() => {
-          placaSeleccionada = novedadActiva?.placa || placaSeleccionada;
+          placaSeleccionada = novedadActiva.placa;
           vieneDePasoAnterior = 'finalizarIncidente';
           prepararPantallaInicio();
-        }, 2000);
+        }, 1500);
       }
     } else { mostrarMsg('finIncMsg', data.error, 'err'); }
   } catch(e) { mostrarMsg('finIncMsg', 'Error de conexión.', 'err'); }
@@ -449,6 +451,7 @@ function irSeleccionarPlaca() {
   document.getElementById('placaInput').value = '';
   document.getElementById('infoPlacaBuscada').style.display = 'none';
   document.getElementById('botonesPlaca').style.display = 'none';
+  document.getElementById('placaNoRegistrada').style.display = 'none';
   placaSeleccionada = '';
   mostrarPaso('pasoSeleccionarPlaca');
 }
@@ -474,12 +477,17 @@ function buscarPlaca() {
     document.getElementById('pUnidadOp').textContent = u.unidadOperativa||'-';
     document.getElementById('infoPlacaBuscada').style.display = 'block';
     document.getElementById('botonesPlaca').style.display = 'grid';
+    document.getElementById('placaNoRegistrada').style.display = 'none';
+    document.getElementById('btnRepNovedad').style.display = 'block';
   } else if (placa.length >= 6) {
     document.getElementById('infoPlacaBuscada').style.display = 'none';
     document.getElementById('botonesPlaca').style.display = 'grid';
+    document.getElementById('placaNoRegistrada').style.display = 'block';
+    document.getElementById('btnRepNovedad').style.display = 'none';
   } else {
     document.getElementById('infoPlacaBuscada').style.display = 'none';
     document.getElementById('botonesPlaca').style.display = 'none';
+    document.getElementById('placaNoRegistrada').style.display = 'none';
   }
 }
 
@@ -500,15 +508,22 @@ function prepararPantallaInicio() {
   gpsData.inicioGps = null;
   document.getElementById('inicioGpsTxt').textContent = 'Sin ubicación';
   document.getElementById('inicioGpsTxt').style.color = '#777';
+  document.getElementById('inicioFoto').value = '';
+  document.getElementById('inicioFotoPreview').src = '';
   document.getElementById('inicioFotoPreview').style.display = 'none';
+  document.getElementById('inicioMsg').style.display = 'none';
   mostrarPaso('pasoIniciarCobertura');
 }
 
 function irNovedad() {
+  if (!MAESTRO[placaSeleccionada]) {
+    alert('Esta placa no está registrada en el sistema. No se puede reportar novedad.');
+    return;
+  }
   const u = MAESTRO[placaSeleccionada];
   document.getElementById('infoNovedadResumen').innerHTML = `
     <div class="info-row"><span class="info-label">Unidad afectada:</span><span class="info-value">${placaSeleccionada}</span></div>
-    ${u ? `<div class="info-row"><span class="info-label">Ruta:</span><span class="info-value">${u.rutaAsignada||'-'}</span></div>` : ''}
+    <div class="info-row"><span class="info-label">Ruta:</span><span class="info-value">${u.rutaAsignada||'-'}</span></div>
   `;
   limpiarFormularioNovedad();
   mostrarPaso('pasoNovedad');
@@ -517,10 +532,38 @@ function irNovedad() {
 function limpiarFormularioNovedad() {
   document.getElementById('novedadTipo').value = '';
   document.getElementById('novedadDesc').value = '';
+  document.getElementById('novFoto').value = '';
+  document.getElementById('novFotoPreview').src = '';
   document.getElementById('novFotoPreview').style.display = 'none';
   gpsData.novGps = null;
   document.getElementById('novGpsTxt').textContent = 'Sin ubicación';
   document.getElementById('novGpsTxt').style.color = '#777';
+  document.getElementById('novMsg').style.display = 'none';
+}
+
+function irEnviarSeguimiento() {
+  gpsData.segGps = null;
+  document.getElementById('segGpsTxt').textContent = 'Sin ubicación';
+  document.getElementById('segGpsTxt').style.color = '#777';
+  document.getElementById('segFoto').value = '';
+  document.getElementById('segFotoPreview').src = '';
+  document.getElementById('segFotoPreview').style.display = 'none';
+  document.getElementById('segMsg').style.display = 'none';
+  mostrarPaso('pasoSeguimiento');
+}
+
+function irFinalizarCobertura() {
+  gpsData.finGps = null;
+  document.getElementById('finGpsTxt').textContent = 'Sin ubicación';
+  document.getElementById('finGpsTxt').style.color = '#777';
+  document.getElementById('finFoto').value = '';
+  document.getElementById('finFotoPreview').src = '';
+  document.getElementById('finFotoPreview').style.display = 'none';
+  document.getElementById('finObs').value = '';
+  document.getElementById('finRondas').value = 'Sí';
+  document.getElementById('finMotivoDiv').style.display = 'none';
+  document.getElementById('finMsg').style.display = 'none';
+  mostrarPaso('pasoFinalizar');
 }
 
 function irAtras() {
@@ -538,15 +581,29 @@ function volverPanel() {
 
 async function enviarInicioRuta() {
   if (!gpsData.inicioGps) { mostrarMsg('inicioMsg', 'Capturá la ubicación GPS primero.', 'err'); return; }
+  const fotoSrc = document.getElementById('inicioFotoPreview').src;
+  if (!fotoSrc || !fotoSrc.startsWith('data:')) {
+    mostrarMsg('inicioMsg', 'Debés cargar una foto de la unidad para iniciar.', 'err');
+    return;
+  }
   const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
   try {
-    const fotoSrc = document.getElementById('inicioFotoPreview').src;
+    // Si viene de resolver un incidente antes de iniciar, incluir esos datos
+    let incidenteInfo = null;
+    if (novedadActiva && vieneDePasoAnterior === 'finalizarIncidente' && !novedadActiva.teniaRuta) {
+      incidenteInfo = {
+        tipo: novedadActiva.tipo,
+        horaInicio: novedadActiva.hora,
+        horaFin: novedadActiva.horaFinIncidente || '',
+        descripcion: novedadActiva.descripcion || ''
+      };
+    }
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
       action: 'iniciarRuta', codigoMotorizado: sesion.codigo,
       nombre: sesion.nombre, placaMoto: sesion.placaMoto,
       placa: placaSeleccionada, latitud: gpsData.inicioGps.lat,
-      longitud: gpsData.inicioGps.lng,
-      foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : ''
+      longitud: gpsData.inicioGps.lng, foto: fotoSrc,
+      incidenteInfo: incidenteInfo
     })});
     const data = await res.json();
     if (data.success) {
@@ -554,6 +611,7 @@ async function enviarInicioRuta() {
       localStorage.setItem('placaActiva_' + sesion.codigo, placaSeleccionada);
       localStorage.removeItem('novedad_' + sesion.codigo);
       novedadActiva = null;
+      vieneDePasoAnterior = '';
       mostrarMsg('inicioMsg', `✅ ${data.mensaje}`, 'ok');
       setTimeout(volverPanel, 2000);
     } else { mostrarMsg('inicioMsg', data.error, 'err'); }
@@ -575,13 +633,7 @@ async function enviarSeguimiento() {
     })});
     const data = await res.json();
     mostrarMsg('segMsg', data.success ? `✅ ${data.mensaje}` : data.error, data.success ? 'ok' : 'err');
-    if (data.success) {
-      gpsData.segGps = null;
-      document.getElementById('segGpsTxt').textContent = 'Sin ubicación';
-      document.getElementById('segGpsTxt').style.color = '#777';
-      document.getElementById('segFotoPreview').style.display = 'none';
-      setTimeout(volverPanel, 2000);
-    }
+    if (data.success) setTimeout(volverPanel, 2000);
   } catch(e) { mostrarMsg('segMsg', 'Error de conexión.', 'err'); }
   btn.disabled = false; btn.textContent = '✅ Enviar seguimiento';
 }
@@ -617,22 +669,27 @@ async function enviarFin() {
 async function enviarNovedad() {
   const tipo = document.getElementById('novedadTipo').value;
   if (!tipo) { mostrarMsg('novMsg', 'Seleccioná el tipo de novedad.', 'err'); return; }
+  if (!MAESTRO[placaSeleccionada]) {
+    mostrarMsg('novMsg', 'La placa no está registrada en el sistema. No se puede reportar.', 'err');
+    return;
+  }
   if (!gpsData.novGps) { mostrarMsg('novMsg', 'Capturá la ubicación GPS primero.', 'err'); return; }
   const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
   try {
     const fotoSrc = document.getElementById('novFotoPreview').src;
+    const descripcion = document.getElementById('novedadDesc').value;
     const teniaRuta = !!localStorage.getItem('rutaActiva_' + sesion.codigo);
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
       action: 'reportarNovedad', codigoMotorizado: sesion.codigo,
       nombre: sesion.nombre, placaMoto: sesion.placaMoto,
       placaUnidad: placaSeleccionada, tipoNovedad: tipo,
-      descripcion: document.getElementById('novedadDesc').value,
+      descripcion: descripcion,
       latitud: gpsData.novGps.lat, longitud: gpsData.novGps.lng,
       foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : ''
     })});
     const data = await res.json();
     if (data.success) {
-      novedadActiva = {tipo, placa: placaSeleccionada, hora: data.hora, teniaRuta};
+      novedadActiva = {tipo, placa: placaSeleccionada, hora: data.hora, teniaRuta, descripcion};
       localStorage.setItem('novedad_' + sesion.codigo, JSON.stringify(novedadActiva));
 
       document.getElementById('resumenNovedad').innerHTML =
@@ -663,6 +720,7 @@ async function enviarFinSinCobertura() {
       nombre: sesion.nombre, placaMoto: sesion.placaMoto,
       placaUnidad: novedadActiva?.placa || '',
       tipoNovedad: novedadActiva?.tipo || '',
+      descripcion: novedadActiva?.descripcion || '',
       observaciones: document.getElementById('finSinObs').value
     })});
     const data = await res.json();
