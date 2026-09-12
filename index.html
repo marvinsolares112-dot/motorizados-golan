@@ -107,7 +107,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
       <div class="info-row"><span class="info-label">Operación:</span><span class="info-value" id="pOp"></span></div>
       <div class="info-row"><span class="info-label">Unidad operativa:</span><span class="info-value" id="pUnidadOp"></span></div>
     </div>
-    <p class="gps-txt" id="placaNoRegistrada" style="display:none;color:#d32f2f">⚠️ Esta placa no está registrada. Solo podés iniciar cobertura, no reportar novedad.</p>
+    <p class="gps-txt" id="placaNoRegistrada" style="display:none;color:#d32f2f">⚠️ Ingresá la placa correcta o comunicate con la Central de Alerta y Respuesta.</p>
     <div id="botonesPlaca" style="display:none" class="grid2">
       <button class="btn btn-green" onclick="irInicioCobertura()">🟢 Iniciar cobertura</button>
       <button class="btn btn-purple" id="btnRepNovedad" onclick="irNovedad()">⚠️ Reportar novedad</button>
@@ -478,12 +478,10 @@ function buscarPlaca() {
     document.getElementById('infoPlacaBuscada').style.display = 'block';
     document.getElementById('botonesPlaca').style.display = 'grid';
     document.getElementById('placaNoRegistrada').style.display = 'none';
-    document.getElementById('btnRepNovedad').style.display = 'block';
   } else if (placa.length >= 6) {
     document.getElementById('infoPlacaBuscada').style.display = 'none';
-    document.getElementById('botonesPlaca').style.display = 'grid';
+    document.getElementById('botonesPlaca').style.display = 'none';
     document.getElementById('placaNoRegistrada').style.display = 'block';
-    document.getElementById('btnRepNovedad').style.display = 'none';
   } else {
     document.getElementById('infoPlacaBuscada').style.display = 'none';
     document.getElementById('botonesPlaca').style.display = 'none';
