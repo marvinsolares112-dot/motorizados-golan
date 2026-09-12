@@ -3,66 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Motorizados Golán</title>
+<title>Control de Coberturas - CAR</title>
 <link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
-.header{background:#d32f2f;color:white;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
-.header h1{font-size:18px}
-.header p{font-size:11px;opacity:.8}
+body{font-family:Arial,sans-serif;background:#e9e9e9;min-height:100vh}
+.header{background:#1a1a1a;color:white;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.header-left{display:flex;align-items:center;gap:10px}
+.header-logo{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #6d1f2a;flex-shrink:0}
+.header h1{font-size:16px;line-height:1.2}
+.header p{font-size:10px;opacity:.75;letter-spacing:.03em}
 .container{padding:16px;max-width:480px;margin:0 auto}
-.card{background:white;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-.card h2{font-size:15px;color:#d32f2f;margin-bottom:14px;border-bottom:2px solid #d32f2f;padding-bottom:6px}
+.card{background:white;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.card h2{font-size:15px;color:#6d1f2a;margin-bottom:14px;border-bottom:2px solid #6d1f2a;padding-bottom:6px}
 label{display:block;font-size:12px;color:#555;margin-bottom:3px;margin-top:10px;font-weight:bold}
-input,select,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#fafafa}
-input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;background:white}
+input,select,textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:14px;background:#fafafa;color:#1a1a1a}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#6d1f2a;background:white}
 .btn{width:100%;padding:13px;border:none;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;margin-top:10px}
-.btn-red{background:#d32f2f;color:white}
-.btn-blue{background:#1976d2;color:white}
-.btn-green{background:#388e3c;color:white}
-.btn-gray{background:#777;color:white}
-.btn-orange{background:#f57c00;color:white}
-.btn-purple{background:#7b1fa2;color:white}
+.btn-red{background:#6d1f2a;color:white}
+.btn-blue{background:#3a3a3a;color:white}
+.btn-green{background:#2e2e2e;color:white}
+.btn-gray{background:#999;color:white}
+.btn-orange{background:#8a2e3a;color:white}
+.btn-purple{background:#4a4a4a;color:white}
 .btn:disabled{opacity:.5;cursor:not-allowed}
-.info-box{background:#fff8e1;border:1px solid #ffc107;border-radius:8px;padding:10px;margin-top:10px;font-size:12px}
+.info-box{background:#f2f2f2;border:1px solid #ccc;border-radius:8px;padding:10px;margin-top:10px;font-size:12px}
 .info-row{display:flex;justify-content:space-between;margin-bottom:3px}
 .info-label{color:#777}
-.info-value{font-weight:bold;color:#333}
-.badge{display:inline-block;background:#d32f2f;color:white;border-radius:20px;padding:2px 10px;font-size:11px;margin-bottom:8px}
-.badge-green{background:#388e3c}
-.badge-blue{background:#1976d2}
-.badge-orange{background:#f57c00}
-.badge-purple{background:#7b1fa2}
-.badge-red{background:#d32f2f}
+.info-value{font-weight:bold;color:#1a1a1a}
+.badge{display:inline-block;background:#6d1f2a;color:white;border-radius:20px;padding:2px 10px;font-size:11px;margin-bottom:8px}
+.badge-green{background:#2e2e2e}
+.badge-blue{background:#3a3a3a}
+.badge-orange{background:#8a2e3a}
+.badge-purple{background:#4a4a4a}
+.badge-red{background:#6d1f2a}
 .msg{text-align:center;padding:10px;border-radius:8px;margin-top:10px;font-weight:bold;font-size:13px;display:none}
-.msg-ok{background:#e8f5e9;color:#388e3c}
-.msg-err{background:#ffebee;color:#d32f2f}
+.msg-ok{background:#e6e6e6;color:#2e2e2e}
+.msg-err{background:#f2dde0;color:#6d1f2a}
 .step{display:none}
 .step.active{display:block}
 .foto-preview{width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-top:8px;display:none}
 .gps-txt{font-size:11px;color:#777;margin-top:3px}
-.mot-card{background:#f5f5f5;border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;border:1px solid #ddd}
-.mot-card:hover{background:#e3f2fd;border-color:#1976d2}
-.mot-nombre{font-weight:bold;font-size:13px}
+.mot-card{background:#f2f2f2;border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;border:1px solid #ccc}
+.mot-card:hover{background:#e6e6e6;border-color:#6d1f2a}
+.mot-nombre{font-weight:bold;font-size:13px;color:#1a1a1a}
 .mot-info{font-size:11px;color:#777;margin-top:2px}
-.reporte-card{background:#fff3e0;border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid #f57c00}
-.reporte-tipo{font-weight:bold;font-size:13px;color:#e65100}
+.reporte-card{background:#f2e4e6;border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid #8a2e3a}
+.reporte-tipo{font-weight:bold;font-size:13px;color:#6d1f2a}
 .reporte-info{font-size:11px;color:#777;margin-top:2px}
 .punto-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eee;font-size:12px}
 .punto-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 #mapa-detalle{height:280px;border-radius:8px;margin-top:10px}
 #mapa-general{height:320px;border-radius:8px;margin-top:10px}
-.sesion-info{font-size:11px;color:rgba(255,255,255,.8);text-align:right}
+.sesion-info{font-size:11px;color:rgba(255,255,255,.75);text-align:right}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-.novedad-banner{background:#fff3e0;border:1px solid #f57c00;border-radius:8px;padding:12px;margin-top:10px;font-size:13px;color:#e65100}
+.novedad-banner{background:#f2e4e6;border:1px solid #8a2e3a;border-radius:8px;padding:12px;margin-top:10px;font-size:13px;color:#6d1f2a}
 </style>
 </head>
 <body>
 <div class="header">
-  <div><h1>🏍️ Motorizados Golán</h1><p>Sistema de registro de apoyo</p></div>
+  <div class="header-left">
+    <img src="icon-192.png" alt="Logo" class="header-logo">
+    <div>
+      <h1>Control de Coberturas</h1>
+      <p>CAR — Central de Alerta y Respuesta</p>
+    </div>
+  </div>
   <div class="sesion-info" id="sesionInfo"></div>
 </div>
 <div class="container">
@@ -107,7 +116,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#d32f2f;backgr
       <div class="info-row"><span class="info-label">Operación:</span><span class="info-value" id="pOp"></span></div>
       <div class="info-row"><span class="info-label">Unidad operativa:</span><span class="info-value" id="pUnidadOp"></span></div>
     </div>
-    <p class="gps-txt" id="placaNoRegistrada" style="display:none;color:#d32f2f">⚠️ Ingresá la placa correcta o comunicate con la Central de Alerta y Respuesta.</p>
+    <p class="gps-txt" id="placaNoRegistrada" style="display:none;color:#6d1f2a">⚠️ Ingresá la placa correcta o comunicate con la Central de Alerta y Respuesta.</p>
     <div id="botonesPlaca" style="display:none" class="grid2">
       <button class="btn btn-green" onclick="irInicioCobertura()">🟢 Iniciar cobertura</button>
       <button class="btn btn-purple" id="btnRepNovedad" onclick="irNovedad()">⚠️ Reportar novedad</button>
@@ -361,7 +370,7 @@ function actualizarBotonesPanel() {
 
   if (novedadActiva) {
     badge.textContent = '⚠️ Novedad activa';
-    badge.style.background = '#7b1fa2';
+    badge.style.background = '#4a4a4a';
     banner.style.display = 'block';
     banner.innerHTML = `⚠️ <strong>${novedadActiva.tipo}</strong> — Unidad: ${novedadActiva.placa} (${novedadActiva.hora})`;
 
@@ -378,7 +387,7 @@ function actualizarBotonesPanel() {
     }
   } else if (rutaActiva) {
     badge.textContent = '🟢 Ruta activa — ' + rutaActiva;
-    badge.style.background = '#388e3c';
+    badge.style.background = '#2e2e2e';
     banner.style.display = 'none';
     botonesDiv.innerHTML = `
       <button class="btn btn-blue" onclick="irEnviarSeguimiento()" style="margin-top:10px">📍 Enviar seguimiento</button>
@@ -388,7 +397,7 @@ function actualizarBotonesPanel() {
     `;
   } else {
     badge.textContent = 'Sin ruta activa';
-    badge.style.background = '#d32f2f';
+    badge.style.background = '#6d1f2a';
     banner.style.display = 'none';
     botonesDiv.innerHTML = `
       <button class="btn btn-green" onclick="irSeleccionarPlaca()" style="margin-top:10px">🟢 Iniciar / Reportar novedad</button>
@@ -432,7 +441,6 @@ async function confirmarFinalizarIncidente() {
         mostrarMsg('finIncMsg', '✅ Incidente resuelto — Continuás con la cobertura', 'ok');
         setTimeout(volverPanel, 2000);
       } else {
-        // Guardamos la hora de fin del incidente para incluirla al iniciar la ruta
         novedadActiva.horaFinIncidente = data.hora;
         localStorage.setItem('novedad_' + sesion.codigo, JSON.stringify(novedadActiva));
         mostrarMsg('finIncMsg', '✅ Incidente resuelto — Ahora iniciá la cobertura', 'ok');
@@ -586,7 +594,6 @@ async function enviarInicioRuta() {
   }
   const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
   try {
-    // Si viene de resolver un incidente antes de iniciar, incluir esos datos
     let incidenteInfo = null;
     if (novedadActiva && vieneDePasoAnterior === 'finalizarIncidente' && !novedadActiva.teniaRuta) {
       incidenteInfo = {
@@ -744,12 +751,12 @@ async function cargarReportes() {
     if (!data.reportes.length) { document.getElementById('listaReportes').innerHTML = '<p style="font-size:13px;color:#777">Sin reportes hoy ✅</p>'; return; }
     document.getElementById('listaReportes').innerHTML = data.reportes.map(r => `
       <div class="reporte-card">
-        <div class="reporte-tipo">⚠️ ${r.tipoNovedad} — <span style="color:${r.estado==='Activa'?'#e65100':'#388e3c'}">${r.estado}</span></div>
+        <div class="reporte-tipo">⚠️ ${r.tipoNovedad} — <span style="color:${r.estado==='Activa'?'#6d1f2a':'#2e2e2e'}">${r.estado}</span></div>
         <div class="reporte-info">🏍️ ${r.nombre} (${r.codigo}) — ${r.hora}</div>
         <div class="reporte-info">🚛 Unidad: <strong>${r.placaUnidad}</strong></div>
         ${r.descripcion?`<div class="reporte-info">📝 ${r.descripcion}</div>`:''}
         ${r.horaRetoma?`<div class="reporte-info">✅ Retomó: ${r.horaRetoma} | Sin cobertura: ${r.tiempoSin}</div>`:''}
-        ${r.foto?`<div class="reporte-info"><a href="${r.foto}" target="_blank" style="color:#7b1fa2">📷 Ver foto</a></div>`:''}
+        ${r.foto?`<div class="reporte-info"><a href="${r.foto}" target="_blank" style="color:#6d1f2a">📷 Ver foto</a></div>`:''}
       </div>`).join('');
   } catch(e) { document.getElementById('listaReportes').innerHTML = '<p style="color:red;font-size:13px">Error de conexión.</p>'; }
 }
@@ -776,13 +783,13 @@ function verDetalle(codigo) {
   if (!mot) return;
   document.getElementById('detalleNombre').textContent = `📍 ${mot.nombre}`;
   document.getElementById('detalleMotorizado').style.display = 'block';
-  const colores = {'Inicio ruta':'#388e3c','Seguimiento':'#1976d2','Fin ruta':'#d32f2f','Reanudó cobertura':'#388e3c','Finalizó sin cobertura':'#d32f2f'};
+  const colores = {'Inicio ruta':'#2e2e2e','Seguimiento':'#3a3a3a','Fin ruta':'#6d1f2a','Reanudó cobertura':'#2e2e2e','Finalizó sin cobertura':'#6d1f2a'};
   document.getElementById('listaPuntos').innerHTML = mot.puntos.map(p => `
     <div class="punto-item">
-      <div class="punto-dot" style="background:${colores[p.tipo]||'#7b1fa2'}"></div>
+      <div class="punto-dot" style="background:${colores[p.tipo]||'#4a4a4a'}"></div>
       <div><strong>${p.tipo}</strong> — ${p.hora}
         ${p.placaUnidad?`<span style="color:#777"> | ${p.placaUnidad}</span>`:''}
-        ${p.foto?`<a href="${p.foto}" target="_blank" style="color:#1976d2;margin-left:6px">📷</a>`:''}
+        ${p.foto?`<a href="${p.foto}" target="_blank" style="color:#6d1f2a;margin-left:6px">📷</a>`:''}
       </div>
     </div>`).join('');
   const pm = mot.puntos.filter(p => p.lat && p.lng);
@@ -793,13 +800,13 @@ function verDetalle(codigo) {
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(mapaDetalle);
       const coords = [];
       pm.forEach(p => {
-        const color = colores[p.tipo]||'#7b1fa2';
+        const color = colores[p.tipo] || '#4a4a4a';
         L.circleMarker([p.lat,p.lng],{radius:8,fillColor:color,color:'white',weight:2,fillOpacity:1})
           .addTo(mapaDetalle)
           .bindPopup(`<b>${p.tipo}</b><br>${p.hora}${p.foto?`<br><a href="${p.foto}" target="_blank">📷 Ver foto</a>`:''}`);
         coords.push([p.lat,p.lng]);
       });
-      if (coords.length>1) L.polyline(coords,{color:'#1976d2',weight:2,dashArray:'5,5'}).addTo(mapaDetalle);
+      if (coords.length>1) L.polyline(coords,{color:'#3a3a3a',weight:2,dashArray:'5,5'}).addTo(mapaDetalle);
     },100);
   }
   document.getElementById('detalleMotorizado').scrollIntoView({behavior:'smooth'});
@@ -825,12 +832,12 @@ function capturarGPS(key, txtId) {
     pos => {
       gpsData[key] = {lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6)};
       document.getElementById(txtId).textContent = `✅ ${gpsData[key].lat}, ${gpsData[key].lng}`;
-      document.getElementById(txtId).style.color = '#388e3c';
+      document.getElementById(txtId).style.color = '#2e2e2e';
       btn.textContent = '✅ Ubicación capturada'; btn.disabled = false;
     },
     () => {
       document.getElementById(txtId).textContent = '❌ No se pudo obtener ubicación';
-      document.getElementById(txtId).style.color = '#d32f2f';
+      document.getElementById(txtId).style.color = '#6d1f2a';
       btn.textContent = 'Reintentar'; btn.disabled = false;
     },
     {enableHighAccuracy:true, timeout:10000}
