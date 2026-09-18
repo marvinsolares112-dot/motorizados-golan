@@ -43,6 +43,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#6d1f2a;backgr
 .msg{text-align:center;padding:10px;border-radius:8px;margin-top:10px;font-weight:bold;font-size:13px;display:none}
 .msg-ok{background:#e1ede8;color:#2d6a4f}
 .msg-err{background:#f2dde0;color:#6d1f2a}
+.msg-wait{background:#f5efdd;color:#8a6d1f}
 .step{display:none}
 .step.active{display:block}
 .foto-preview{width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-top:8px;display:none}
@@ -322,7 +323,7 @@ function mostrarPaso(id) {
 function mostrarMsg(id, texto, tipo) {
   const el = document.getElementById(id);
   el.textContent = texto;
-  el.className = 'msg ' + (tipo === 'ok' ? 'msg-ok' : 'msg-err');
+  el.className = 'msg ' + (tipo === 'ok' ? 'msg-ok' : (tipo === 'wait' ? 'msg-wait' : 'msg-err'));
   el.style.display = 'block';
   if (tipo === 'ok') setTimeout(() => el.style.display = 'none', 4000);
 }
@@ -330,7 +331,7 @@ function mostrarMsg(id, texto, tipo) {
 async function hacerLogin() {
   const codigo = document.getElementById('loginCodigo').value.trim().toUpperCase();
   if (!codigo) { mostrarMsg('loginMsg', 'Ingresá tu código personal.', 'err'); return; }
-  mostrarMsg('loginMsg', 'Verificando...', 'ok');
+  mostrarMsg('loginMsg', 'Verificando...', 'wait');
   try {
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'login', codigo})});
     const data = await res.json();
@@ -344,7 +345,30 @@ async function hacerLogin() {
       await cargarMaestro();
       await mostrarPanelMotorizado();
     } else { mostrarMsg('loginMsg', data.error, 'err'); }
-  } catch(e) { mostrarMsg('loginMsg', 'Error de conexión.', 'err'); }
+  } catch(e) { mostrarMsg('loginMsg', 'Error de conexión. Verificá tu señal e intentá de nuevo.', 'err'); }
+}
+
+// Aplica el estado real del Sheet al localStorage (usado por la sincronización normal y por la verificación post-error)
+function aplicarEstado(data) {
+  if (data.estado === 'novedad') {
+    localStorage.setItem('novedad_' + sesion.codigo, JSON.stringify({
+      tipo: data.tipo, placa: data.placa, hora: data.hora, teniaRuta: data.teniaRuta
+    }));
+    if (data.teniaRuta) {
+      localStorage.setItem('rutaActiva_' + sesion.codigo, data.placa);
+      localStorage.setItem('placaActiva_' + sesion.codigo, data.placa);
+    } else {
+      localStorage.removeItem('rutaActiva_' + sesion.codigo);
+    }
+  } else if (data.estado === 'ruta') {
+    localStorage.removeItem('novedad_' + sesion.codigo);
+    localStorage.setItem('rutaActiva_' + sesion.codigo, data.placa);
+    localStorage.setItem('placaActiva_' + sesion.codigo, data.placa);
+  } else {
+    localStorage.removeItem('novedad_' + sesion.codigo);
+    localStorage.removeItem('rutaActiva_' + sesion.codigo);
+    localStorage.removeItem('placaActiva_' + sesion.codigo);
+  }
 }
 
 // Consulta el estado REAL en el Sheet y corrige lo que haya guardado el celular
@@ -352,28 +376,22 @@ async function sincronizarEstado() {
   try {
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'estadoActual', codigo: sesion.codigo})});
     const data = await res.json();
-    if (!data.success) return;
+    if (!data.success) return null;
+    aplicarEstado(data);
+    return data;
+  } catch(e) { return null; }
+}
 
-    if (data.estado === 'novedad') {
-      localStorage.setItem('novedad_' + sesion.codigo, JSON.stringify({
-        tipo: data.tipo, placa: data.placa, hora: data.hora, teniaRuta: data.teniaRuta
-      }));
-      if (data.teniaRuta) {
-        localStorage.setItem('rutaActiva_' + sesion.codigo, data.placa);
-        localStorage.setItem('placaActiva_' + sesion.codigo, data.placa);
-      } else {
-        localStorage.removeItem('rutaActiva_' + sesion.codigo);
-      }
-    } else if (data.estado === 'ruta') {
-      localStorage.removeItem('novedad_' + sesion.codigo);
-      localStorage.setItem('rutaActiva_' + sesion.codigo, data.placa);
-      localStorage.setItem('placaActiva_' + sesion.codigo, data.placa);
-    } else {
-      localStorage.removeItem('novedad_' + sesion.codigo);
-      localStorage.removeItem('rutaActiva_' + sesion.codigo);
-      localStorage.removeItem('placaActiva_' + sesion.codigo);
-    }
-  } catch(e) {}
+// Despues de un error de conexion, verifica contra el Sheet si la accion SI se guardo
+// tipoAccion: 'iniciar' | 'finalizar' | 'novedad' | 'reanudar'
+async function verificarTrasError(tipoAccion, placaEsperada) {
+  const data = await sincronizarEstado();
+  if (!data) return null; // no se pudo verificar (sin señal)
+  if (tipoAccion === 'iniciar') return data.estado === 'ruta' && data.placa === placaEsperada;
+  if (tipoAccion === 'finalizar') return data.estado === 'ninguno';
+  if (tipoAccion === 'novedad') return data.estado === 'novedad';
+  if (tipoAccion === 'reanudar') return data.estado !== 'novedad';
+  return null;
 }
 
 async function mostrarPanelMotorizado() {
@@ -481,7 +499,25 @@ async function confirmarFinalizarIncidente() {
         }, 1500);
       }
     } else { mostrarMsg('finIncMsg', data.error, 'err'); }
-  } catch(e) { mostrarMsg('finIncMsg', 'Error de conexión.', 'err'); }
+  } catch(e) {
+    mostrarMsg('finIncMsg', 'Verificando si se guardó...', 'wait');
+    const ok = await verificarTrasError('reanudar', novedadActiva?.placa);
+    if (ok === true) {
+      mostrarMsg('finIncMsg', 'Sí se guardó correctamente (hubo un error de conexión). Continuemos.', 'ok');
+      if (finIncidenteTeniaRuta) { setTimeout(volverPanel, 2000); }
+      else {
+        setTimeout(() => {
+          placaSeleccionada = novedadActiva?.placa || placaSeleccionada;
+          vieneDePasoAnterior = 'finalizarIncidente';
+          prepararPantallaInicio();
+        }, 1500);
+      }
+    } else if (ok === false) {
+      mostrarMsg('finIncMsg', 'No se guardó. Verificá tu conexión e intentá de nuevo.', 'err');
+    } else {
+      mostrarMsg('finIncMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
+    }
+  }
   btn.disabled = false; btn.textContent = 'Confirmar — incidente resuelto';
 }
 
@@ -623,6 +659,7 @@ async function enviarInicioRuta() {
     return;
   }
   const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
+  const placaIntentada = placaSeleccionada;
   try {
     let incidenteInfo = null;
     if (novedadActiva && vieneDePasoAnterior === 'finalizarIncidente' && !novedadActiva.teniaRuta) {
@@ -636,21 +673,41 @@ async function enviarInicioRuta() {
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
       action: 'iniciarRuta', codigoMotorizado: sesion.codigo,
       nombre: sesion.nombre, placaMoto: sesion.placaMoto,
-      placa: placaSeleccionada, latitud: gpsData.inicioGps.lat,
+      placa: placaIntentada, latitud: gpsData.inicioGps.lat,
       longitud: gpsData.inicioGps.lng, foto: fotoSrc,
       incidenteInfo: incidenteInfo
     })});
     const data = await res.json();
     if (data.success) {
-      localStorage.setItem('rutaActiva_' + sesion.codigo, placaSeleccionada);
-      localStorage.setItem('placaActiva_' + sesion.codigo, placaSeleccionada);
+      localStorage.setItem('rutaActiva_' + sesion.codigo, placaIntentada);
+      localStorage.setItem('placaActiva_' + sesion.codigo, placaIntentada);
       localStorage.removeItem('novedad_' + sesion.codigo);
       novedadActiva = null;
       vieneDePasoAnterior = '';
       mostrarMsg('inicioMsg', data.mensaje, 'ok');
       setTimeout(volverPanel, 2000);
-    } else { mostrarMsg('inicioMsg', data.error, 'err'); }
-  } catch(e) { mostrarMsg('inicioMsg', 'Error de conexión.', 'err'); }
+    } else {
+      await sincronizarEstado();
+      if (localStorage.getItem('rutaActiva_' + sesion.codigo) === placaIntentada) {
+        mostrarMsg('inicioMsg', 'Esta cobertura ya se había iniciado correctamente. Continuemos.', 'ok');
+        setTimeout(volverPanel, 2000);
+      } else {
+        mostrarMsg('inicioMsg', data.error, 'err');
+      }
+    }
+  } catch(e) {
+    mostrarMsg('inicioMsg', 'Verificando si se guardó...', 'wait');
+    const ok = await verificarTrasError('iniciar', placaIntentada);
+    if (ok === true) {
+      mostrarMsg('inicioMsg', 'Sí se guardó correctamente (hubo un error de conexión). Continuemos.', 'ok');
+      novedadActiva = null; vieneDePasoAnterior = '';
+      setTimeout(volverPanel, 2000);
+    } else if (ok === false) {
+      mostrarMsg('inicioMsg', 'No se guardó. Verificá tu conexión e intentá de nuevo.', 'err');
+    } else {
+      mostrarMsg('inicioMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
+    }
+  }
   btn.disabled = false; btn.textContent = 'Confirmar inicio';
 }
 
@@ -669,7 +726,9 @@ async function enviarSeguimiento() {
     const data = await res.json();
     mostrarMsg('segMsg', data.success ? data.mensaje : data.error, data.success ? 'ok' : 'err');
     if (data.success) setTimeout(volverPanel, 2000);
-  } catch(e) { mostrarMsg('segMsg', 'Error de conexión.', 'err'); }
+  } catch(e) {
+    mostrarMsg('segMsg', 'Error de conexión. Si el problema persiste, tocá enviar de nuevo — no hay riesgo de duplicar el seguimiento.', 'err');
+  }
   btn.disabled = false; btn.textContent = 'Enviar seguimiento';
 }
 
@@ -696,8 +755,28 @@ async function enviarFin() {
       novedadActiva = null;
       mostrarMsg('finMsg', `${data.mensaje} — Tiempo: ${data.tiempoTotal}`, 'ok');
       setTimeout(volverPanel, 2500);
-    } else { mostrarMsg('finMsg', data.error, 'err'); }
-  } catch(e) { mostrarMsg('finMsg', 'Error de conexión.', 'err'); }
+    } else {
+      await sincronizarEstado();
+      if (!localStorage.getItem('rutaActiva_' + sesion.codigo)) {
+        mostrarMsg('finMsg', 'Esta cobertura ya se había finalizado correctamente. Continuemos.', 'ok');
+        setTimeout(volverPanel, 2000);
+      } else {
+        mostrarMsg('finMsg', data.error, 'err');
+      }
+    }
+  } catch(e) {
+    mostrarMsg('finMsg', 'Verificando si se guardó...', 'wait');
+    const ok = await verificarTrasError('finalizar');
+    if (ok === true) {
+      mostrarMsg('finMsg', 'Sí se guardó correctamente (hubo un error de conexión). Continuemos.', 'ok');
+      novedadActiva = null;
+      setTimeout(volverPanel, 2000);
+    } else if (ok === false) {
+      mostrarMsg('finMsg', 'No se guardó. Verificá tu conexión e intentá de nuevo.', 'err');
+    } else {
+      mostrarMsg('finMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
+    }
+  }
   btn.disabled = false; btn.textContent = 'Finalizar cobertura';
 }
 
@@ -710,6 +789,7 @@ async function enviarNovedad() {
   }
   if (!gpsData.novGps) { mostrarMsg('novMsg', 'Capturá la ubicación GPS primero.', 'err'); return; }
   const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
+  const placaIntentada = placaSeleccionada;
   try {
     const fotoSrc = document.getElementById('novFotoPreview').src;
     const descripcion = document.getElementById('novedadDesc').value;
@@ -717,34 +797,48 @@ async function enviarNovedad() {
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
       action: 'reportarNovedad', codigoMotorizado: sesion.codigo,
       nombre: sesion.nombre, placaMoto: sesion.placaMoto,
-      placaUnidad: placaSeleccionada, tipoNovedad: tipo,
+      placaUnidad: placaIntentada, tipoNovedad: tipo,
       descripcion: descripcion,
       latitud: gpsData.novGps.lat, longitud: gpsData.novGps.lng,
       foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : ''
     })});
     const data = await res.json();
     if (data.success) {
-      novedadActiva = {tipo, placa: placaSeleccionada, hora: data.hora, teniaRuta, descripcion};
-      localStorage.setItem('novedad_' + sesion.codigo, JSON.stringify(novedadActiva));
-
-      document.getElementById('resumenNovedad').innerHTML =
-        `<strong>${tipo}</strong> reportada a las ${data.hora}<br>Unidad afectada: <strong>${placaSeleccionada}</strong>`;
-
-      if (teniaRuta) {
-        document.getElementById('opcionesPostNovedad').innerHTML = `
-          <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:8px">Se resolvió — Continuar cobertura</button>
-          <button class="btn btn-red" onclick="mostrarPaso('pasoFinSinCobertura')">No se resolvió — Finalizar</button>
-        `;
-      } else {
-        document.getElementById('opcionesPostNovedad').innerHTML = `
-          <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:8px">Se resolvió — Iniciar cobertura</button>
-          <button class="btn btn-red" onclick="mostrarPaso('pasoFinSinCobertura')">No se resolvió — Finalizar sin cobertura</button>
-        `;
-      }
-      mostrarPaso('pasoPostNovedad');
+      mostrarPostNovedad(tipo, placaIntentada, data.hora, teniaRuta, descripcion);
     } else { mostrarMsg('novMsg', data.error, 'err'); }
-  } catch(e) { mostrarMsg('novMsg', 'Error de conexión.', 'err'); }
+  } catch(e) {
+    mostrarMsg('novMsg', 'Verificando si se guardó...', 'wait');
+    const ok = await verificarTrasError('novedad');
+    if (ok === true) {
+      mostrarMsg('novMsg', 'Sí se guardó correctamente (hubo un error de conexión). Continuemos.', 'ok');
+      const nov = JSON.parse(localStorage.getItem('novedad_' + sesion.codigo) || '{}');
+      setTimeout(() => mostrarPostNovedad(nov.tipo, nov.placa, nov.hora, nov.teniaRuta, document.getElementById('novedadDesc').value), 1500);
+    } else if (ok === false) {
+      mostrarMsg('novMsg', 'No se guardó. Verificá tu conexión e intentá de nuevo.', 'err');
+    } else {
+      mostrarMsg('novMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
+    }
+  }
   btn.disabled = false; btn.textContent = 'Enviar reporte';
+}
+
+function mostrarPostNovedad(tipo, placa, hora, teniaRuta, descripcion) {
+  novedadActiva = {tipo, placa, hora, teniaRuta, descripcion};
+  localStorage.setItem('novedad_' + sesion.codigo, JSON.stringify(novedadActiva));
+  document.getElementById('resumenNovedad').innerHTML =
+    `<strong>${tipo}</strong> reportada a las ${hora}<br>Unidad afectada: <strong>${placa}</strong>`;
+  if (teniaRuta) {
+    document.getElementById('opcionesPostNovedad').innerHTML = `
+      <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:8px">Se resolvió — Continuar cobertura</button>
+      <button class="btn btn-red" onclick="mostrarPaso('pasoFinSinCobertura')">No se resolvió — Finalizar</button>
+    `;
+  } else {
+    document.getElementById('opcionesPostNovedad').innerHTML = `
+      <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:8px">Se resolvió — Iniciar cobertura</button>
+      <button class="btn btn-red" onclick="mostrarPaso('pasoFinSinCobertura')">No se resolvió — Finalizar sin cobertura</button>
+    `;
+  }
+  mostrarPaso('pasoPostNovedad');
 }
 
 async function enviarFinSinCobertura() {
@@ -766,8 +860,29 @@ async function enviarFinSinCobertura() {
       novedadActiva = null;
       mostrarMsg('finSinMsg', data.mensaje, 'ok');
       setTimeout(volverPanel, 2500);
-    } else { mostrarMsg('finSinMsg', data.error, 'err'); }
-  } catch(e) { mostrarMsg('finSinMsg', 'Error de conexión.', 'err'); }
+    } else {
+      await sincronizarEstado();
+      if (!localStorage.getItem('novedad_' + sesion.codigo)) {
+        mostrarMsg('finSinMsg', 'Esto ya se había registrado correctamente. Continuemos.', 'ok');
+        novedadActiva = null;
+        setTimeout(volverPanel, 2000);
+      } else {
+        mostrarMsg('finSinMsg', data.error, 'err');
+      }
+    }
+  } catch(e) {
+    mostrarMsg('finSinMsg', 'Verificando si se guardó...', 'wait');
+    const ok = await verificarTrasError('reanudar');
+    if (ok === true) {
+      mostrarMsg('finSinMsg', 'Sí se guardó correctamente (hubo un error de conexión). Continuemos.', 'ok');
+      novedadActiva = null;
+      setTimeout(volverPanel, 2000);
+    } else if (ok === false) {
+      mostrarMsg('finSinMsg', 'No se guardó. Verificá tu conexión e intentá de nuevo.', 'err');
+    } else {
+      mostrarMsg('finSinMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
+    }
+  }
   btn.disabled = false; btn.textContent = 'Confirmar sin cobertura';
 }
 
