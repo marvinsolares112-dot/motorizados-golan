@@ -8,6 +8,8 @@
 <link rel="icon" href="icon-192.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;background:#e9e9e9;min-height:100vh}
@@ -315,6 +317,19 @@ let novedadActiva = null;
 let vieneDePasoAnterior = "";
 let finIncidenteTeniaRuta = false;
 
+// ---------- Firebase (solo para consultas rapidas de estado) ----------
+const firebaseConfig = {
+  apiKey: "AIzaSyCs2bF6QAhE3E48pAXhqjPit-BsBfwPEHk",
+  authDomain: "control-coberturas-car.firebaseapp.com",
+  databaseURL: "https://control-coberturas-car-default-rtdb.firebaseio.com",
+  projectId: "control-coberturas-car",
+  storageBucket: "control-coberturas-car.firebasestorage.app",
+  messagingSenderId: "319878796415",
+  appId: "1:319878796415:web:e080757aebafefe2b95b4a"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 function mostrarPaso(id) {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -348,7 +363,7 @@ async function hacerLogin() {
   } catch(e) { mostrarMsg('loginMsg', 'Error de conexión. Verificá tu señal e intentá de nuevo.', 'err'); }
 }
 
-// Aplica el estado real del Sheet al localStorage (usado por la sincronización normal y por la verificación post-error)
+// Aplica un estado (venga de Firestore o de Apps Script) al localStorage
 function aplicarEstado(data) {
   if (data.estado === 'novedad') {
     localStorage.setItem('novedad_' + sesion.codigo, JSON.stringify({
@@ -371,22 +386,47 @@ function aplicarEstado(data) {
   }
 }
 
-// Consulta el estado REAL en el Sheet y corrige lo que haya guardado el celular
+// Consulta RAPIDA a Firebase — se usa todo el tiempo (login, volver al panel)
 async function sincronizarEstado() {
   try {
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'estadoActual', codigo: sesion.codigo})});
-    const data = await res.json();
-    if (!data.success) return null;
+    const doc = await db.collection('estado').doc(sesion.codigo).get();
+    let data;
+    if (doc.exists) {
+      const d = doc.data();
+      data = { success: true, estado: d.estado || 'ninguno', placa: d.placa || '', tipo: d.tipo || '', hora: d.hora || '', teniaRuta: !!d.teniaRuta };
+    } else {
+      data = { success: true, estado: 'ninguno' };
+    }
     aplicarEstado(data);
     return data;
   } catch(e) { return null; }
 }
 
-// Despues de un error de conexion, verifica contra el Sheet si la accion SI se guardo
-// tipoAccion: 'iniciar' | 'finalizar' | 'novedad' | 'reanudar'
+// Guarda el estado actual en Firebase, para que la proxima consulta rapida ya este al dia
+async function guardarEstadoFirebase(obj) {
+  try { await db.collection('estado').doc(sesion.codigo).set(obj); } catch(e) {}
+}
+
+// Consulta LENTA pero 100% confiable contra el Sheet real — solo se usa para
+// verificar si una accion se guardo despues de un error de conexion
+async function verificarEstadoServidor() {
+  try {
+    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'estadoActual', codigo: sesion.codigo})});
+    const data = await res.json();
+    if (!data.success) return null;
+    aplicarEstado(data);
+    guardarEstadoFirebase({
+      estado: data.estado, placa: data.placa || '', tipo: data.tipo || '',
+      hora: data.hora || '', teniaRuta: !!data.teniaRuta
+    });
+    return data;
+  } catch(e) { return null; }
+}
+
+// Despues de un error de conexion, verifica contra el Sheet real si la accion SI se guardo
 async function verificarTrasError(tipoAccion, placaEsperada) {
-  const data = await sincronizarEstado();
-  if (!data) return null; // no se pudo verificar (sin señal)
+  const data = await verificarEstadoServidor();
+  if (!data) return null;
   if (tipoAccion === 'iniciar') return data.estado === 'ruta' && data.placa === placaEsperada;
   if (tipoAccion === 'finalizar') return data.estado === 'ninguno';
   if (tipoAccion === 'novedad') return data.estado === 'novedad';
@@ -486,11 +526,13 @@ async function confirmarFinalizarIncidente() {
       if (finIncidenteTeniaRuta) {
         localStorage.removeItem('novedad_' + sesion.codigo);
         novedadActiva = null;
+        guardarEstadoFirebase({ estado: 'ruta', placa: localStorage.getItem('placaActiva_' + sesion.codigo) || '' });
         mostrarMsg('finIncMsg', 'Incidente resuelto — Continuás con la cobertura', 'ok');
         setTimeout(volverPanel, 2000);
       } else {
         novedadActiva.horaFinIncidente = data.hora;
         localStorage.setItem('novedad_' + sesion.codigo, JSON.stringify(novedadActiva));
+        guardarEstadoFirebase({ estado: 'ninguno' });
         mostrarMsg('finIncMsg', 'Incidente resuelto — Ahora iniciá la cobertura', 'ok');
         setTimeout(() => {
           placaSeleccionada = novedadActiva.placa;
@@ -684,11 +726,12 @@ async function enviarInicioRuta() {
       localStorage.removeItem('novedad_' + sesion.codigo);
       novedadActiva = null;
       vieneDePasoAnterior = '';
+      guardarEstadoFirebase({ estado: 'ruta', placa: placaIntentada });
       mostrarMsg('inicioMsg', data.mensaje, 'ok');
       setTimeout(volverPanel, 2000);
     } else {
-      await sincronizarEstado();
-      if (localStorage.getItem('rutaActiva_' + sesion.codigo) === placaIntentada) {
+      const chk = await verificarEstadoServidor();
+      if (chk && localStorage.getItem('rutaActiva_' + sesion.codigo) === placaIntentada) {
         mostrarMsg('inicioMsg', 'Esta cobertura ya se había iniciado correctamente. Continuemos.', 'ok');
         setTimeout(volverPanel, 2000);
       } else {
@@ -753,11 +796,12 @@ async function enviarFin() {
       localStorage.removeItem('placaActiva_' + sesion.codigo);
       localStorage.removeItem('novedad_' + sesion.codigo);
       novedadActiva = null;
+      guardarEstadoFirebase({ estado: 'ninguno' });
       mostrarMsg('finMsg', `${data.mensaje} — Tiempo: ${data.tiempoTotal}`, 'ok');
       setTimeout(volverPanel, 2500);
     } else {
-      await sincronizarEstado();
-      if (!localStorage.getItem('rutaActiva_' + sesion.codigo)) {
+      const chk = await verificarEstadoServidor();
+      if (chk && !localStorage.getItem('rutaActiva_' + sesion.codigo)) {
         mostrarMsg('finMsg', 'Esta cobertura ya se había finalizado correctamente. Continuemos.', 'ok');
         setTimeout(volverPanel, 2000);
       } else {
@@ -804,6 +848,7 @@ async function enviarNovedad() {
     })});
     const data = await res.json();
     if (data.success) {
+      guardarEstadoFirebase({ estado: 'novedad', placa: placaIntentada, tipo, hora: data.hora, teniaRuta });
       mostrarPostNovedad(tipo, placaIntentada, data.hora, teniaRuta, descripcion);
     } else { mostrarMsg('novMsg', data.error, 'err'); }
   } catch(e) {
@@ -858,11 +903,12 @@ async function enviarFinSinCobertura() {
       localStorage.removeItem('rutaActiva_' + sesion.codigo);
       localStorage.removeItem('placaActiva_' + sesion.codigo);
       novedadActiva = null;
+      guardarEstadoFirebase({ estado: 'ninguno' });
       mostrarMsg('finSinMsg', data.mensaje, 'ok');
       setTimeout(volverPanel, 2500);
     } else {
-      await sincronizarEstado();
-      if (!localStorage.getItem('novedad_' + sesion.codigo)) {
+      const chk = await verificarEstadoServidor();
+      if (chk && !localStorage.getItem('novedad_' + sesion.codigo)) {
         mostrarMsg('finSinMsg', 'Esto ya se había registrado correctamente. Continuemos.', 'ok');
         novedadActiva = null;
         setTimeout(volverPanel, 2000);
