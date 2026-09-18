@@ -410,17 +410,22 @@ async function guardarEstadoFirebase(obj) {
 // Consulta LENTA pero 100% confiable contra el Sheet real — solo se usa para
 // verificar si una accion se guardo despues de un error de conexion
 async function verificarEstadoServidor() {
-  try {
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'estadoActual', codigo: sesion.codigo})});
-    const data = await res.json();
-    if (!data.success) return null;
-    aplicarEstado(data);
-    guardarEstadoFirebase({
-      estado: data.estado, placa: data.placa || '', tipo: data.tipo || '',
-      hora: data.hora || '', teniaRuta: !!data.teniaRuta
-    });
-    return data;
-  } catch(e) { return null; }
+  for (let intento = 0; intento < 3; intento++) {
+    try {
+      const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'estadoActual', codigo: sesion.codigo})});
+      const data = await res.json();
+      if (data.success) {
+        aplicarEstado(data);
+        guardarEstadoFirebase({
+          estado: data.estado, placa: data.placa || '', tipo: data.tipo || '',
+          hora: data.hora || '', teniaRuta: !!data.teniaRuta
+        });
+        return data;
+      }
+    } catch(e) {}
+    if (intento < 2) await new Promise(r => setTimeout(r, 2500));
+  }
+  return null;
 }
 
 // Despues de un error de conexion, verifica contra el Sheet real si la accion SI se guardo
