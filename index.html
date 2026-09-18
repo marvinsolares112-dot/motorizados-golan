@@ -895,6 +895,7 @@ async function enviarFinSinCobertura() {
       placaUnidad: novedadActiva?.placa || '',
       tipoNovedad: novedadActiva?.tipo || '',
       descripcion: novedadActiva?.descripcion || '',
+      teniaRuta: !!novedadActiva?.teniaRuta,
       observaciones: document.getElementById('finSinObs').value
     })});
     const data = await res.json();
