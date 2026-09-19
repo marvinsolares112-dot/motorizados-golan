@@ -59,6 +59,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#6d1f2a;backgr
 .reporte-info{font-size:11px;color:#777;margin-top:2px}
 .punto-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eee;font-size:12px}
 .punto-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.cobertura-titulo{font-size:11px;font-weight:bold;color:#6d1f2a;margin-bottom:4px}
 #mapa-detalle{height:280px;border-radius:8px;margin-top:10px}
 #mapa-general{height:320px;border-radius:8px;margin-top:10px}
 .sesion-info{font-size:11px;color:rgba(255,255,255,.75);text-align:right}
@@ -295,7 +296,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#6d1f2a;backgr
   </div>
   <div class="card" id="detalleMotorizado" style="display:none">
     <h2 id="detalleNombre">Detalle</h2>
-    <div id="listaPuntos"></div>
+    <label>Filtrar por unidad</label>
+    <select id="filtroUnidad" onchange="redibujarMapaDetalle()"></select>
+    <div id="listaPuntos" style="margin-top:10px"></div>
     <div id="mapa-detalle"></div>
   </div>
   <div class="card" id="seccionReportes" style="display:none">
@@ -1057,38 +1060,85 @@ async function cargarAdmin() {
   } catch(e) { document.getElementById('listaMotorizados').innerHTML = '<p style="color:#6d1f2a;font-size:13px">Error de conexión.</p>'; }
 }
 
+// Agrupa los puntos cronológicos de un motorizado en coberturas separadas.
+// Una cobertura empieza en "Inicio ruta" o en una "Novedad" cuando no hay ninguna abierta,
+// y termina en "Fin ruta" o "Finalizó sin cobertura".
+function agruparPorCobertura(puntos) {
+  const grupos = [];
+  let actual = null;
+  puntos.forEach(p => {
+    if (p.tipo === 'Inicio ruta' && actual) {
+      grupos.push(actual);
+      actual = null;
+    }
+    if (!actual) {
+      actual = { placaUnidad: p.placaUnidad, puntos: [] };
+    }
+    actual.puntos.push(p);
+    if (p.tipo === 'Fin ruta' || p.tipo === 'Finalizó sin cobertura') {
+      grupos.push(actual);
+      actual = null;
+    }
+  });
+  if (actual) grupos.push(actual);
+  return grupos;
+}
+
 function verDetalle(codigo) {
   const mot = window._adminData?.find(m => m.codigo === codigo);
   if (!mot) return;
   document.getElementById('detalleNombre').textContent = mot.nombre;
   document.getElementById('detalleMotorizado').style.display = 'block';
+
+  window._detalleGrupos = agruparPorCobertura(mot.puntos);
+  const unidades = [...new Set(window._detalleGrupos.map(g => g.placaUnidad).filter(Boolean))];
+  const filtro = document.getElementById('filtroUnidad');
+  filtro.innerHTML = '<option value="">Todas las unidades</option>' +
+    unidades.map(u => `<option value="${u}">${u}</option>`).join('');
+  filtro.value = '';
+
+  redibujarMapaDetalle();
+  document.getElementById('detalleMotorizado').scrollIntoView({behavior:'smooth'});
+}
+
+function redibujarMapaDetalle() {
+  const filtroValor = document.getElementById('filtroUnidad').value;
+  const grupos = (window._detalleGrupos || []).filter(g => !filtroValor || g.placaUnidad === filtroValor);
   const colores = {'Inicio ruta':'#2d6a4f','Seguimiento':'#1f4e6b','Fin ruta':'#6d1f2a','Reanudó cobertura':'#2d6a4f','Finalizó sin cobertura':'#6d1f2a'};
-  document.getElementById('listaPuntos').innerHTML = mot.puntos.map(p => `
-    <div class="punto-item">
-      <div class="punto-dot" style="background:${colores[p.tipo]||'#8a6d1f'}"></div>
-      <div><strong>${p.tipo}</strong> — ${p.hora}
-        ${p.placaUnidad?`<span style="color:#777"> | ${p.placaUnidad}</span>`:''}
-        ${p.foto?`<a href="${p.foto}" target="_blank" style="color:#1f4e6b;margin-left:6px">Ver foto</a>`:''}
-      </div>
-    </div>`).join('');
-  const pm = mot.puntos.filter(p => p.lat && p.lng);
-  if (pm.length) {
-    setTimeout(() => {
-      if (mapaDetalle) { mapaDetalle.remove(); mapaDetalle = null; }
-      mapaDetalle = L.map('mapa-detalle').setView([pm[0].lat, pm[0].lng], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(mapaDetalle);
+
+  document.getElementById('listaPuntos').innerHTML = grupos.map((g, gi) => `
+    <div style="margin-top:${gi>0?'12px':'0'};padding-top:${gi>0?'10px':'0'};${gi>0?'border-top:2px solid #eee':''}">
+      <div class="cobertura-titulo">Cobertura — ${g.placaUnidad || 'Sin unidad'}</div>
+      ${g.puntos.map(p => `
+        <div class="punto-item">
+          <div class="punto-dot" style="background:${colores[p.tipo]||'#8a6d1f'}"></div>
+          <div><strong>${p.tipo}</strong> — ${p.hora}
+            ${p.placaUnidad?`<span style="color:#777"> | ${p.placaUnidad}</span>`:''}
+            ${p.foto?`<a href="${p.foto}" target="_blank" style="color:#1f4e6b;margin-left:6px">Ver foto</a>`:''}
+          </div>
+        </div>`).join('')}
+    </div>`).join('') || '<p style="font-size:12px;color:#777">Sin datos para esta selección.</p>';
+
+  setTimeout(() => {
+    if (mapaDetalle) { mapaDetalle.remove(); mapaDetalle = null; }
+    const primerPunto = grupos.flatMap(g => g.puntos).find(p => p.lat && p.lng);
+    if (!primerPunto) return;
+    mapaDetalle = L.map('mapa-detalle').setView([primerPunto.lat, primerPunto.lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(mapaDetalle);
+
+    grupos.forEach(g => {
+      const pm = g.puntos.filter(p => p.lat && p.lng);
       const coords = [];
       pm.forEach(p => {
         const color = colores[p.tipo] || '#8a6d1f';
         L.circleMarker([p.lat,p.lng],{radius:8,fillColor:color,color:'white',weight:2,fillOpacity:1})
           .addTo(mapaDetalle)
-          .bindPopup(`<b>${p.tipo}</b><br>${p.hora}${p.foto?`<br><a href="${p.foto}" target="_blank">Ver foto</a>`:''}`);
+          .bindPopup(`<b>${p.tipo}</b><br>${p.hora}<br>Unidad: ${p.placaUnidad || '-'}${p.foto?`<br><a href="${p.foto}" target="_blank">Ver foto</a>`:''}`);
         coords.push([p.lat,p.lng]);
       });
       if (coords.length>1) L.polyline(coords,{color:'#1f4e6b',weight:2,dashArray:'5,5'}).addTo(mapaDetalle);
-    },100);
-  }
-  document.getElementById('detalleMotorizado').scrollIntoView({behavior:'smooth'});
+    });
+  },100);
 }
 
 async function cargarMapaGeneral() {
