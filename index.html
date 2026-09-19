@@ -32,6 +32,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#6d1f2a;backgr
 .btn-orange{background:#b5502e;color:white}
 .btn-purple{background:#8a6d1f;color:white}
 .btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{width:auto;padding:6px 10px;margin:0;font-size:11px;border-radius:6px}
 a.btn{display:block;text-align:center;text-decoration:none}
 .info-box{background:#f2f2f2;border:1px solid #ccc;border-radius:8px;padding:10px;margin-top:10px;font-size:12px}
 .info-row{display:flex;justify-content:space-between;margin-bottom:3px}
@@ -61,6 +62,10 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .punto-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eee;font-size:12px}
 .punto-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .cobertura-titulo{font-size:11px;font-weight:bold;color:#6d1f2a;margin-bottom:4px}
+.presencia-item{padding:10px 0;border-bottom:1px solid #eee}
+.presencia-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.presencia-acciones{display:flex;gap:6px;flex-shrink:0}
+.presencia-alerta{font-size:11px;margin:4px 0 0}
 #mapa-detalle{height:280px;border-radius:8px;margin-top:10px}
 #mapa-general{height:320px;border-radius:8px;margin-top:10px}
 .sesion-info{font-size:11px;color:rgba(255,255,255,.75);text-align:right}
@@ -290,27 +295,47 @@ a.btn{display:block;text-align:center;text-decoration:none}
 <div class="step" id="pasoAdmin">
   <div class="card">
     <div class="badge badge-blue">Panel administrador</div>
-    <h2>Control de motorizados</h2>
-    <button class="btn btn-blue" onclick="cargarAdmin()">Actualizar</button>
-    <button class="btn btn-purple" onclick="cargarReportes()" style="margin-top:8px">Ver reportes del día</button>
-    <div id="listaMotorizados" style="margin-top:12px"></div>
-    <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:8px">Volver</button>
+    <div class="grid2">
+      <button class="btn btn-blue" id="tabGeneralBtn" onclick="cambiarTabAdmin('general')">General</button>
+      <button class="btn btn-gray" id="tabMapaBtn" onclick="cambiarTabAdmin('mapa')">Mapa</button>
+    </div>
   </div>
-  <div class="card" id="detalleMotorizado" style="display:none">
-    <h2 id="detalleNombre">Detalle</h2>
-    <label>Filtrar por unidad</label>
-    <select id="filtroUnidad" onchange="redibujarMapaDetalle()"></select>
-    <div id="listaPuntos" style="margin-top:10px"></div>
-    <div id="mapa-detalle"></div>
+
+  <div id="tabAdminGeneral">
+    <div class="card">
+      <h2>Motorizados — presencia</h2>
+      <button class="btn btn-blue" onclick="cargarPresenciaAdmin()">Actualizar</button>
+      <div id="listaPresencia" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h2>Reportes del día</h2>
+      <button class="btn btn-purple" onclick="cargarReportes()">Ver reportes</button>
+      <div id="listaReportes" style="margin-top:12px"></div>
+    </div>
   </div>
-  <div class="card" id="seccionReportes" style="display:none">
-    <h2>Reportes del día</h2>
-    <div id="listaReportes"></div>
+
+  <div id="tabAdminMapa" style="display:none">
+    <div class="card">
+      <h2>Control de motorizados</h2>
+      <button class="btn btn-blue" onclick="cargarAdmin()">Actualizar</button>
+      <div id="listaMotorizados" style="margin-top:12px"></div>
+    </div>
+    <div class="card" id="detalleMotorizado" style="display:none">
+      <h2 id="detalleNombre">Detalle</h2>
+      <label>Filtrar por unidad</label>
+      <select id="filtroUnidad" onchange="redibujarMapaDetalle()"></select>
+      <div id="listaPuntos" style="margin-top:10px"></div>
+      <div id="mapa-detalle"></div>
+    </div>
+    <div class="card">
+      <h2>Mapa general</h2>
+      <button class="btn btn-blue" onclick="cargarMapaGeneral()">Ver mapa general</button>
+      <div id="mapa-general"></div>
+    </div>
   </div>
+
   <div class="card">
-    <h2>Mapa general</h2>
-    <button class="btn btn-blue" onclick="cargarMapaGeneral()">Ver mapa general</button>
-    <div id="mapa-general"></div>
+    <button class="btn btn-gray" onclick="volverPanel()">Volver</button>
   </div>
 </div>
 
@@ -327,8 +352,9 @@ let placaSeleccionada = "";
 let novedadActiva = null;
 let vieneDePasoAnterior = "";
 let finIncidenteTeniaRuta = false;
+let ultimaPlacaFallidaAvisada = "";
 
-// ---------- Firebase (solo para consultas rapidas de estado) ----------
+// ---------- Firebase ----------
 const firebaseConfig = {
   apiKey: "AIzaSyCs2bF6QAhE3E48pAXhqjPit-BsBfwPEHk",
   authDomain: "control-coberturas-car.firebaseapp.com",
@@ -354,6 +380,74 @@ function mostrarMsg(id, texto, tipo) {
   if (tipo === 'ok') setTimeout(() => el.style.display = 'none', 4000);
 }
 
+// ---------- Huella del dispositivo, presencia, comandos remotos ----------
+function obtenerDispositivoId() {
+  let id = localStorage.getItem('dispositivoId');
+  if (!id) {
+    id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('dispositivoId', id);
+  }
+  return id;
+}
+
+async function actualizarPresencia() {
+  if (!sesion) return;
+  try {
+    const dispositivoId = obtenerDispositivoId();
+    await db.collection('presenciaDispositivos').doc(sesion.codigo + '_' + dispositivoId).set({
+      codigo: sesion.codigo, nombre: sesion.nombre, dispositivo: dispositivoId,
+      ultimaActividad: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await db.collection('dispositivos').doc(dispositivoId).set({
+      codigos: firebase.firestore.FieldValue.arrayUnion({codigo: sesion.codigo, nombre: sesion.nombre})
+    }, { merge: true });
+  } catch(e) {}
+}
+
+function iniciarPresencia() {
+  actualizarPresencia();
+  if (window._heartbeatInterval) clearInterval(window._heartbeatInterval);
+  window._heartbeatInterval = setInterval(actualizarPresencia, 60000);
+}
+
+async function registrarIntentoFallido(tipo) {
+  try {
+    const dispositivoId = obtenerDispositivoId();
+    await db.collection('dispositivos').doc(dispositivoId).set({
+      intentosFallidos: firebase.firestore.FieldValue.increment(1),
+      ultimoFallo: firebase.firestore.FieldValue.serverTimestamp(),
+      ultimoTipoFallo: tipo
+    }, { merge: true });
+  } catch(e) {}
+}
+
+function escucharComandos() {
+  if (window._comandosUnsub) window._comandosUnsub();
+  window._comandosUnsub = db.collection('comandos').doc(sesion.codigo).onSnapshot(doc => {
+    if (doc.exists && doc.data().cerrarSesion) {
+      cerrarSesionForzada();
+    }
+  });
+}
+
+function cerrarSesionForzada() {
+  if (window._heartbeatInterval) clearInterval(window._heartbeatInterval);
+  const codigoAnterior = sesion?.codigo;
+  if (window._comandosUnsub) window._comandosUnsub();
+  localStorage.removeItem('sesionGolan');
+  localStorage.removeItem('rutaActiva_' + codigoAnterior);
+  localStorage.removeItem('placaActiva_' + codigoAnterior);
+  localStorage.removeItem('novedad_' + codigoAnterior);
+  localStorage.removeItem('pendienteInicio_' + codigoAnterior);
+  sesion = null;
+  mostrarPaso('pasoLogin');
+  document.getElementById('sesionInfo').textContent = '';
+  if (codigoAnterior) {
+    db.collection('comandos').doc(codigoAnterior).set({ cerrarSesion: false }).catch(()=>{});
+  }
+  alert('Un administrador cerró tu sesión. Volvé a ingresar cuando quieras.');
+}
+
 async function hacerLogin() {
   const codigo = document.getElementById('loginCodigo').value.trim().toUpperCase();
   if (!codigo) { mostrarMsg('loginMsg', 'Ingresá tu código personal.', 'err'); return; }
@@ -369,8 +463,13 @@ async function hacerLogin() {
       };
       localStorage.setItem('sesionGolan', JSON.stringify(sesion));
       await cargarMaestro();
+      iniciarPresencia();
+      escucharComandos();
       await mostrarPanelMotorizado();
-    } else { mostrarMsg('loginMsg', data.error, 'err'); }
+    } else {
+      mostrarMsg('loginMsg', data.error, 'err');
+      registrarIntentoFallido('codigo_invalido');
+    }
   } catch(e) { mostrarMsg('loginMsg', 'Error de conexión. Verificá tu señal e intentá de nuevo.', 'err'); }
 }
 
@@ -518,7 +617,7 @@ function actualizarBotonesPanel() {
       <button class="btn btn-blue" onclick="irEnviarSeguimiento()" style="margin-top:10px">Enviar seguimiento</button>
       <button class="btn btn-purple" onclick="irNovedadConRuta()">Reportar novedad</button>
       <button class="btn btn-orange" onclick="irFinalizarCobertura()">Finalizar cobertura</button>
-      ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cargarAdmin()" style="margin-top:8px">Panel administrador</button>' : ''}
+      ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cambiarTabAdmin(\'general\')" style="margin-top:8px">Panel administrador</button>' : ''}
     `;
   } else {
     badge.textContent = 'Sin ruta activa';
@@ -526,7 +625,7 @@ function actualizarBotonesPanel() {
     banner.style.display = 'none';
     botonesDiv.innerHTML = `
       <button class="btn btn-green" onclick="irSeleccionarPlaca()" style="margin-top:10px">Iniciar / Reportar novedad</button>
-      ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cargarAdmin()" style="margin-top:8px">Panel administrador</button>' : ''}
+      ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cambiarTabAdmin(\'general\')" style="margin-top:8px">Panel administrador</button>' : ''}
     `;
   }
 }
@@ -616,6 +715,7 @@ function irSeleccionarPlaca() {
   document.getElementById('botonesPlaca').style.display = 'none';
   document.getElementById('placaNoRegistrada').style.display = 'none';
   placaSeleccionada = '';
+  ultimaPlacaFallidaAvisada = '';
   mostrarPaso('pasoSeleccionarPlaca');
 }
 
@@ -641,10 +741,15 @@ function buscarPlaca() {
     document.getElementById('infoPlacaBuscada').style.display = 'block';
     document.getElementById('botonesPlaca').style.display = 'grid';
     document.getElementById('placaNoRegistrada').style.display = 'none';
+    ultimaPlacaFallidaAvisada = '';
   } else if (placa.length >= 6) {
     document.getElementById('infoPlacaBuscada').style.display = 'none';
     document.getElementById('botonesPlaca').style.display = 'none';
     document.getElementById('placaNoRegistrada').style.display = 'block';
+    if (ultimaPlacaFallidaAvisada !== placa) {
+      ultimaPlacaFallidaAvisada = placa;
+      registrarIntentoFallido('placa_no_registrada');
+    }
   } else {
     document.getElementById('infoPlacaBuscada').style.display = 'none';
     document.getElementById('botonesPlaca').style.display = 'none';
@@ -1025,8 +1130,126 @@ async function enviarFinSinCobertura() {
   btn.disabled = false; btn.textContent = 'Confirmar sin cobertura';
 }
 
+function cambiarTabAdmin(tab) {
+  const general = document.getElementById('tabAdminGeneral');
+  const mapa = document.getElementById('tabAdminMapa');
+  const btnG = document.getElementById('tabGeneralBtn');
+  const btnM = document.getElementById('tabMapaBtn');
+  if (tab === 'general') {
+    general.style.display = 'block'; mapa.style.display = 'none';
+    btnG.className = 'btn btn-blue'; btnM.className = 'btn btn-gray';
+    cargarPresenciaAdmin();
+  } else {
+    general.style.display = 'none'; mapa.style.display = 'block';
+    btnG.className = 'btn btn-gray'; btnM.className = 'btn btn-blue';
+    cargarAdmin();
+  }
+}
+
+async function cargarPresenciaAdmin() {
+  const cont = document.getElementById('listaPresencia');
+  cont.innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
+  try {
+    const [presSnap, disSnap, listaRes] = await Promise.all([
+      db.collection('presenciaDispositivos').get(),
+      db.collection('dispositivos').get(),
+      fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminListaCodigos', codigo: sesion.codigo})}).then(r=>r.json())
+    ]);
+
+    const dispositivosInfo = {};
+    disSnap.forEach(doc => { dispositivosInfo[doc.id] = doc.data(); });
+
+    const ahora = Date.now();
+    const porCodigo = {};
+    presSnap.forEach(doc => {
+      const d = doc.data();
+      const ms = d.ultimaActividad?.toMillis ? d.ultimaActividad.toMillis() : 0;
+      if (!porCodigo[d.codigo]) porCodigo[d.codigo] = { codigo: d.codigo, nombre: d.nombre, dispositivosActivos: [] };
+      porCodigo[d.codigo].dispositivosActivos.push({ dispositivo: d.dispositivo, ms });
+    });
+
+    const infoMap = {};
+    if (listaRes.success) listaRes.data.forEach(m => { infoMap[m.codigo] = m; });
+
+    let lista = Object.values(porCodigo).map(p => {
+      const maxMs = Math.max(...p.dispositivosActivos.map(x => x.ms));
+      const minutos = Math.floor((ahora - maxMs) / 60000);
+      const activosAhora = p.dispositivosActivos.filter(x => (ahora - x.ms) < 150000);
+      const otrosCodigosPorDispositivo = [];
+      activosAhora.forEach(x => {
+        const info = dispositivosInfo[x.dispositivo];
+        if (info && info.codigos) {
+          info.codigos.forEach(c => { if (c.codigo !== p.codigo && !otrosCodigosPorDispositivo.find(o=>o.codigo===c.codigo)) otrosCodigosPorDispositivo.push(c); });
+        }
+      });
+      return {
+        codigo: p.codigo, nombre: p.nombre, minutos,
+        multiDispositivo: activosAhora.length > 1,
+        otrosEnDispositivo: otrosCodigosPorDispositivo,
+        activo: infoMap[p.codigo]?.activo ?? 'Sí',
+        puedeGestionar: infoMap[p.codigo]?.puedeGestionar ?? false
+      };
+    });
+
+    lista.sort((a,b) => a.minutos - b.minutos);
+
+    cont.innerHTML = lista.map(p => {
+      let estadoTxt, estadoColor;
+      if (p.minutos < 3) { estadoTxt = 'En línea ahora'; estadoColor = '#2d6a4f'; }
+      else if (p.minutos < 1440) { estadoTxt = `Inactivo hace ${p.minutos < 60 ? p.minutos + ' min' : Math.floor(p.minutos/60) + ' h'}`; estadoColor = '#8a6d1f'; }
+      else { estadoTxt = `Inactivo hace ${Math.floor(p.minutos/1440)} días`; estadoColor = '#777'; }
+      return `
+        <div class="presencia-item">
+          <div class="presencia-top">
+            <div>
+              <strong>${p.nombre}</strong> <span style="color:#777;font-size:11px">${p.codigo}</span><br>
+              <span style="font-size:12px;color:${estadoColor}">${estadoTxt}</span>
+              ${p.activo === 'No' ? '<span style="color:#6d1f2a;font-size:11px;margin-left:6px">(Desactivado)</span>' : ''}
+            </div>
+            ${p.puedeGestionar ? `
+            <div class="presencia-acciones">
+              <button class="btn btn-gray btn-sm" onclick="toggleActivoCodigo('${p.codigo}','${p.activo==='No'?'Sí':'No'}')">${p.activo==='No'?'Activar':'Desactivar'}</button>
+              <button class="btn btn-gray btn-sm" onclick="forzarCierreSesion('${p.codigo}')">Cerrar sesión</button>
+            </div>` : ''}
+          </div>
+          ${p.multiDispositivo ? '<p class="presencia-alerta" style="color:#6d1f2a">⚠️ Sesión activa en más de un dispositivo</p>' : ''}
+          ${p.otrosEnDispositivo.length ? `<p class="presencia-alerta" style="color:#8a6d1f">Este dispositivo también usó: ${p.otrosEnDispositivo.map(o=>o.nombre+' ('+o.codigo+')').join(', ')}</p>` : ''}
+        </div>`;
+    }).join('') || '<p style="font-size:13px;color:#777">Nadie ha iniciado sesión hoy.</p>';
+
+    const fallos = Object.entries(dispositivosInfo).filter(([id, info]) => info.intentosFallidos > 0);
+    if (fallos.length) {
+      cont.innerHTML += `<div style="margin-top:16px;padding-top:12px;border-top:2px solid #eee">
+        <div class="cobertura-titulo">Intentos fallidos detectados</div>
+        ${fallos.map(([id, info]) => `<p style="font-size:12px;color:#6d1f2a;margin:4px 0">${info.intentosFallidos} intento(s) fallido(s) desde un dispositivo${info.codigos && info.codigos.length ? ' (usado también por: ' + info.codigos.map(c=>c.nombre).join(', ') + ')' : ''}</p>`).join('')}
+      </div>`;
+    }
+  } catch(e) {
+    cont.innerHTML = '<p style="color:#6d1f2a;font-size:13px">Error al cargar presencia.</p>';
+  }
+}
+
+async function toggleActivoCodigo(codigoObjetivo, nuevoEstado) {
+  if (!confirm(`¿${nuevoEstado === 'No' ? 'Desactivar' : 'Activar'} el código ${codigoObjetivo}?`)) return;
+  try {
+    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
+      action: 'adminCambiarEstado', codigo: sesion.codigo,
+      codigoObjetivo: codigoObjetivo, nuevoEstado: nuevoEstado
+    })});
+    const data = await res.json();
+    if (data.success) { cargarPresenciaAdmin(); }
+    else { alert(data.error); }
+  } catch(e) { alert('Error de conexión.'); }
+}
+
+async function forzarCierreSesion(codigoObjetivo) {
+  if (!confirm(`¿Forzar el cierre de sesión de ${codigoObjetivo}? Va a salir de la app al instante si la tiene abierta.`)) return;
+  try {
+    await db.collection('comandos').doc(codigoObjetivo).set({ cerrarSesion: true, hora: Date.now() });
+  } catch(e) { alert('No se pudo enviar la orden.'); }
+}
+
 async function cargarReportes() {
-  document.getElementById('seccionReportes').style.display = 'block';
   document.getElementById('listaReportes').innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
   try {
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminReportes', codigo: sesion.codigo})});
@@ -1208,6 +1431,8 @@ async function cargarMaestro() {
 
 function cerrarSesion() {
   if (confirm('¿Seguro que querés cerrar sesión?')) {
+    if (window._heartbeatInterval) clearInterval(window._heartbeatInterval);
+    if (window._comandosUnsub) window._comandosUnsub();
     localStorage.removeItem('sesionGolan');
     localStorage.removeItem('rutaActiva_' + sesion?.codigo);
     localStorage.removeItem('placaActiva_' + sesion?.codigo);
@@ -1225,6 +1450,8 @@ function verificarSesionGuardada() {
     const s = JSON.parse(guardada);
     if (Date.now() < s.expira) {
       sesion = s;
+      iniciarPresencia();
+      escucharComandos();
       cargarMaestro().then(() => mostrarPanelMotorizado());
       return;
     } else { localStorage.removeItem('sesionGolan'); }
