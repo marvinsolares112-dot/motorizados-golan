@@ -366,6 +366,7 @@ async function hacerLogin() {
 // Aplica un estado (venga de Firestore o de Apps Script) al localStorage
 function aplicarEstado(data) {
   if (data.estado === 'novedad') {
+    localStorage.removeItem('pendienteInicio_' + sesion.codigo);
     localStorage.setItem('novedad_' + sesion.codigo, JSON.stringify({
       tipo: data.tipo, placa: data.placa, hora: data.hora, teniaRuta: data.teniaRuta
     }));
@@ -377,12 +378,23 @@ function aplicarEstado(data) {
     }
   } else if (data.estado === 'ruta') {
     localStorage.removeItem('novedad_' + sesion.codigo);
+    localStorage.removeItem('pendienteInicio_' + sesion.codigo);
     localStorage.setItem('rutaActiva_' + sesion.codigo, data.placa);
     localStorage.setItem('placaActiva_' + sesion.codigo, data.placa);
+  } else if (data.estado === 'pendiente_inicio') {
+    localStorage.removeItem('novedad_' + sesion.codigo);
+    localStorage.removeItem('rutaActiva_' + sesion.codigo);
+    localStorage.setItem('placaActiva_' + sesion.codigo, data.placa);
+    localStorage.setItem('pendienteInicio_' + sesion.codigo, JSON.stringify({
+      tipo: data.tipo, placa: data.placa, hora: data.horaIncidente,
+      teniaRuta: false, descripcion: data.descripcion || '',
+      horaFinIncidente: data.horaFinIncidente || ''
+    }));
   } else {
     localStorage.removeItem('novedad_' + sesion.codigo);
     localStorage.removeItem('rutaActiva_' + sesion.codigo);
     localStorage.removeItem('placaActiva_' + sesion.codigo);
+    localStorage.removeItem('pendienteInicio_' + sesion.codigo);
   }
 }
 
@@ -393,7 +405,12 @@ async function sincronizarEstado() {
     let data;
     if (doc.exists) {
       const d = doc.data();
-      data = { success: true, estado: d.estado || 'ninguno', placa: d.placa || '', tipo: d.tipo || '', hora: d.hora || '', teniaRuta: !!d.teniaRuta };
+      data = {
+        success: true, estado: d.estado || 'ninguno', placa: d.placa || '',
+        tipo: d.tipo || '', hora: d.hora || '', teniaRuta: !!d.teniaRuta,
+        horaIncidente: d.horaIncidente || '', horaFinIncidente: d.horaFinIncidente || '',
+        descripcion: d.descripcion || ''
+      };
     } else {
       data = { success: true, estado: 'ninguno' };
     }
@@ -408,7 +425,8 @@ async function guardarEstadoFirebase(obj) {
 }
 
 // Consulta LENTA pero 100% confiable contra el Sheet real — solo se usa para
-// verificar si una accion se guardo despues de un error de conexion
+// verificar si una accion se guardo despues de un error de conexion. Reintenta
+// varias veces por si la primera consulta tambien falla por la conexion.
 async function verificarEstadoServidor() {
   for (let intento = 0; intento < 3; intento++) {
     try {
@@ -448,6 +466,18 @@ async function mostrarPanelMotorizado() {
   document.getElementById('sesionInfo').textContent = `Sesión hasta ${expira.getHours()}:${String(expira.getMinutes()).padStart(2,'0')}`;
   mostrarPaso('pasoMotorizado');
   await sincronizarEstado();
+
+  // Si quedo pendiente de confirmar el inicio (resolvio el reporte pero no llego a confirmar),
+  // saltamos directo a esa pantalla en vez de mostrar el panel
+  const pendiente = localStorage.getItem('pendienteInicio_' + sesion.codigo);
+  if (pendiente) {
+    novedadActiva = JSON.parse(pendiente);
+    placaSeleccionada = novedadActiva.placa;
+    vieneDePasoAnterior = 'finalizarIncidente';
+    prepararPantallaInicio();
+    return;
+  }
+
   actualizarBotonesPanel();
 }
 
@@ -536,8 +566,13 @@ async function confirmarFinalizarIncidente() {
         setTimeout(volverPanel, 2000);
       } else {
         novedadActiva.horaFinIncidente = data.hora;
-        localStorage.setItem('novedad_' + sesion.codigo, JSON.stringify(novedadActiva));
-        guardarEstadoFirebase({ estado: 'ninguno' });
+        localStorage.setItem('pendienteInicio_' + sesion.codigo, JSON.stringify(novedadActiva));
+        localStorage.removeItem('novedad_' + sesion.codigo);
+        guardarEstadoFirebase({
+          estado: 'pendiente_inicio', placa: novedadActiva.placa, tipo: novedadActiva.tipo,
+          horaIncidente: novedadActiva.hora, horaFinIncidente: data.hora,
+          descripcion: novedadActiva.descripcion || ''
+        });
         mostrarMsg('finIncMsg', 'Incidente resuelto — Ahora iniciá la cobertura', 'ok');
         setTimeout(() => {
           placaSeleccionada = novedadActiva.placa;
@@ -687,7 +722,15 @@ function irFinalizarCobertura() {
 
 function irAtras() {
   if (vieneDePasoAnterior === 'finalizarIncidente') {
-    mostrarPaso('pasoFinalizarIncidente');
+    // Si llegamos aca por un salto directo (recarga con confirmacion pendiente),
+    // "Volver" cancela ese tramite pendiente en vez de mandar a re-resolver algo que ya se resolvio
+    if (localStorage.getItem('pendienteInicio_' + sesion.codigo)) {
+      localStorage.removeItem('pendienteInicio_' + sesion.codigo);
+      guardarEstadoFirebase({ estado: 'ninguno' });
+      volverPanel();
+    } else {
+      mostrarPaso('pasoFinalizarIncidente');
+    }
   } else {
     mostrarPaso('pasoSeleccionarPlaca');
   }
@@ -729,6 +772,7 @@ async function enviarInicioRuta() {
       localStorage.setItem('rutaActiva_' + sesion.codigo, placaIntentada);
       localStorage.setItem('placaActiva_' + sesion.codigo, placaIntentada);
       localStorage.removeItem('novedad_' + sesion.codigo);
+      localStorage.removeItem('pendienteInicio_' + sesion.codigo);
       novedadActiva = null;
       vieneDePasoAnterior = '';
       guardarEstadoFirebase({ estado: 'ruta', placa: placaIntentada });
@@ -748,6 +792,7 @@ async function enviarInicioRuta() {
     const ok = await verificarTrasError('iniciar', placaIntentada);
     if (ok === true) {
       mostrarMsg('inicioMsg', 'Sí se guardó correctamente (hubo un error de conexión). Continuemos.', 'ok');
+      localStorage.removeItem('pendienteInicio_' + sesion.codigo);
       novedadActiva = null; vieneDePasoAnterior = '';
       setTimeout(volverPanel, 2000);
     } else if (ok === false) {
@@ -908,6 +953,7 @@ async function enviarFinSinCobertura() {
       localStorage.removeItem('novedad_' + sesion.codigo);
       localStorage.removeItem('rutaActiva_' + sesion.codigo);
       localStorage.removeItem('placaActiva_' + sesion.codigo);
+      localStorage.removeItem('pendienteInicio_' + sesion.codigo);
       novedadActiva = null;
       guardarEstadoFirebase({ estado: 'ninguno' });
       mostrarMsg('finSinMsg', data.mensaje, 'ok');
@@ -927,6 +973,7 @@ async function enviarFinSinCobertura() {
     const ok = await verificarTrasError('reanudar');
     if (ok === true) {
       mostrarMsg('finSinMsg', 'Sí se guardó correctamente (hubo un error de conexión). Continuemos.', 'ok');
+      localStorage.removeItem('pendienteInicio_' + sesion.codigo);
       novedadActiva = null;
       setTimeout(volverPanel, 2000);
     } else if (ok === false) {
@@ -1081,6 +1128,7 @@ function cerrarSesion() {
     localStorage.removeItem('rutaActiva_' + sesion?.codigo);
     localStorage.removeItem('placaActiva_' + sesion?.codigo);
     localStorage.removeItem('novedad_' + sesion?.codigo);
+    localStorage.removeItem('pendienteInicio_' + sesion?.codigo);
     sesion = null;
     mostrarPaso('pasoLogin');
     document.getElementById('sesionInfo').textContent = '';
