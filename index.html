@@ -34,6 +34,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#6d1f2a;backgr
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-sm{width:auto;padding:6px 10px;margin:0;font-size:11px;border-radius:6px}
 a.btn{display:block;text-align:center;text-decoration:none}
+.fab-llamar{position:fixed;bottom:20px;right:20px;width:58px;height:58px;border-radius:50%;background:#1f4e6b;color:white;display:none;align-items:center;justify-content:center;font-size:26px;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,.35);z-index:999}
 .info-box{background:#f2f2f2;border:1px solid #ccc;border-radius:8px;padding:10px;margin-top:10px;font-size:12px}
 .info-row{display:flex;justify-content:space-between;margin-bottom:3px}
 .info-label{color:#777}
@@ -65,7 +66,6 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .presencia-item{padding:10px 0;border-bottom:1px solid #eee}
 .presencia-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .presencia-acciones{display:flex;gap:6px;flex-shrink:0}
-.presencia-alerta{font-size:11px;margin:4px 0 0}
 #mapa-detalle{height:280px;border-radius:8px;margin-top:10px}
 #mapa-general{height:320px;border-radius:8px;margin-top:10px}
 .sesion-info{font-size:11px;color:rgba(255,255,255,.75);text-align:right}
@@ -110,7 +110,6 @@ a.btn{display:block;text-align:center;text-decoration:none}
     </div>
     <div id="novedadBanner" class="novedad-banner" style="display:none"></div>
     <div id="botonesPanel"></div>
-    <a href="tel:+50256950128" class="btn btn-blue">📞 Llamar a Central de Alerta</a>
     <button class="btn btn-gray" onclick="cerrarSesion()" style="margin-top:12px;font-size:12px;padding:8px">Cerrar sesión</button>
   </div>
 </div>
@@ -340,6 +339,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
 </div>
 
 </div>
+<a href="tel:+50256950128" class="fab-llamar" id="fabLlamar" title="Llamar a Central de Alerta" aria-label="Llamar a Central de Alerta">📞</a>
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYCl3ZYGpRWbDNST6Di7lCBrHWpoCLjhTzjzYuCEzCeJVbxN94KTtu_duPXont5tWSfA/exec";
 const SESION_HORAS = 20;
@@ -352,7 +352,6 @@ let placaSeleccionada = "";
 let novedadActiva = null;
 let vieneDePasoAnterior = "";
 let finIncidenteTeniaRuta = false;
-let ultimaPlacaFallidaAvisada = "";
 
 // ---------- Firebase ----------
 const firebaseConfig = {
@@ -380,6 +379,9 @@ function mostrarMsg(id, texto, tipo) {
   if (tipo === 'ok') setTimeout(() => el.style.display = 'none', 4000);
 }
 
+function mostrarFab() { document.getElementById('fabLlamar').style.display = 'flex'; }
+function ocultarFab() { document.getElementById('fabLlamar').style.display = 'none'; }
+
 // ---------- Huella del dispositivo, presencia, comandos remotos ----------
 function obtenerDispositivoId() {
   let id = localStorage.getItem('dispositivoId');
@@ -398,9 +400,6 @@ async function actualizarPresencia() {
       codigo: sesion.codigo, nombre: sesion.nombre, dispositivo: dispositivoId,
       ultimaActividad: firebase.firestore.FieldValue.serverTimestamp()
     });
-    await db.collection('dispositivos').doc(dispositivoId).set({
-      codigos: firebase.firestore.FieldValue.arrayUnion({codigo: sesion.codigo, nombre: sesion.nombre})
-    }, { merge: true });
   } catch(e) {}
 }
 
@@ -408,17 +407,6 @@ function iniciarPresencia() {
   actualizarPresencia();
   if (window._heartbeatInterval) clearInterval(window._heartbeatInterval);
   window._heartbeatInterval = setInterval(actualizarPresencia, 60000);
-}
-
-async function registrarIntentoFallido(tipo) {
-  try {
-    const dispositivoId = obtenerDispositivoId();
-    await db.collection('dispositivos').doc(dispositivoId).set({
-      intentosFallidos: firebase.firestore.FieldValue.increment(1),
-      ultimoFallo: firebase.firestore.FieldValue.serverTimestamp(),
-      ultimoTipoFallo: tipo
-    }, { merge: true });
-  } catch(e) {}
 }
 
 function escucharComandos() {
@@ -442,6 +430,7 @@ function cerrarSesionForzada() {
   sesion = null;
   mostrarPaso('pasoLogin');
   document.getElementById('sesionInfo').textContent = '';
+  ocultarFab();
   if (codigoAnterior) {
     db.collection('comandos').doc(codigoAnterior).set({ cerrarSesion: false }).catch(()=>{});
   }
@@ -465,10 +454,10 @@ async function hacerLogin() {
       await cargarMaestro();
       iniciarPresencia();
       escucharComandos();
+      mostrarFab();
       await mostrarPanelMotorizado();
     } else {
       mostrarMsg('loginMsg', data.error, 'err');
-      registrarIntentoFallido('codigo_invalido');
     }
   } catch(e) { mostrarMsg('loginMsg', 'Error de conexión. Verificá tu señal e intentá de nuevo.', 'err'); }
 }
@@ -715,7 +704,6 @@ function irSeleccionarPlaca() {
   document.getElementById('botonesPlaca').style.display = 'none';
   document.getElementById('placaNoRegistrada').style.display = 'none';
   placaSeleccionada = '';
-  ultimaPlacaFallidaAvisada = '';
   mostrarPaso('pasoSeleccionarPlaca');
 }
 
@@ -741,15 +729,10 @@ function buscarPlaca() {
     document.getElementById('infoPlacaBuscada').style.display = 'block';
     document.getElementById('botonesPlaca').style.display = 'grid';
     document.getElementById('placaNoRegistrada').style.display = 'none';
-    ultimaPlacaFallidaAvisada = '';
   } else if (placa.length >= 6) {
     document.getElementById('infoPlacaBuscada').style.display = 'none';
     document.getElementById('botonesPlaca').style.display = 'none';
     document.getElementById('placaNoRegistrada').style.display = 'block';
-    if (ultimaPlacaFallidaAvisada !== placa) {
-      ultimaPlacaFallidaAvisada = placa;
-      registrarIntentoFallido('placa_no_registrada');
-    }
   } else {
     document.getElementById('infoPlacaBuscada').style.display = 'none';
     document.getElementById('botonesPlaca').style.display = 'none';
@@ -1150,42 +1133,28 @@ async function cargarPresenciaAdmin() {
   const cont = document.getElementById('listaPresencia');
   cont.innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
   try {
-    const [presSnap, disSnap, listaRes] = await Promise.all([
+    const [presSnap, listaRes] = await Promise.all([
       db.collection('presenciaDispositivos').get(),
-      db.collection('dispositivos').get(),
       fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminListaCodigos', codigo: sesion.codigo})}).then(r=>r.json())
     ]);
-
-    const dispositivosInfo = {};
-    disSnap.forEach(doc => { dispositivosInfo[doc.id] = doc.data(); });
 
     const ahora = Date.now();
     const porCodigo = {};
     presSnap.forEach(doc => {
       const d = doc.data();
       const ms = d.ultimaActividad?.toMillis ? d.ultimaActividad.toMillis() : 0;
-      if (!porCodigo[d.codigo]) porCodigo[d.codigo] = { codigo: d.codigo, nombre: d.nombre, dispositivosActivos: [] };
-      porCodigo[d.codigo].dispositivosActivos.push({ dispositivo: d.dispositivo, ms });
+      if (!porCodigo[d.codigo] || ms > porCodigo[d.codigo].ms) {
+        porCodigo[d.codigo] = { codigo: d.codigo, nombre: d.nombre, ms };
+      }
     });
 
     const infoMap = {};
     if (listaRes.success) listaRes.data.forEach(m => { infoMap[m.codigo] = m; });
 
     let lista = Object.values(porCodigo).map(p => {
-      const maxMs = Math.max(...p.dispositivosActivos.map(x => x.ms));
-      const minutos = Math.floor((ahora - maxMs) / 60000);
-      const activosAhora = p.dispositivosActivos.filter(x => (ahora - x.ms) < 150000);
-      const otrosCodigosPorDispositivo = [];
-      activosAhora.forEach(x => {
-        const info = dispositivosInfo[x.dispositivo];
-        if (info && info.codigos) {
-          info.codigos.forEach(c => { if (c.codigo !== p.codigo && !otrosCodigosPorDispositivo.find(o=>o.codigo===c.codigo)) otrosCodigosPorDispositivo.push(c); });
-        }
-      });
+      const minutos = Math.floor((ahora - p.ms) / 60000);
       return {
         codigo: p.codigo, nombre: p.nombre, minutos,
-        multiDispositivo: activosAhora.length > 1,
-        otrosEnDispositivo: otrosCodigosPorDispositivo,
         activo: infoMap[p.codigo]?.activo ?? 'Sí',
         puedeGestionar: infoMap[p.codigo]?.puedeGestionar ?? false
       };
@@ -1212,18 +1181,8 @@ async function cargarPresenciaAdmin() {
               <button class="btn btn-gray btn-sm" onclick="forzarCierreSesion('${p.codigo}')">Cerrar sesión</button>
             </div>` : ''}
           </div>
-          ${p.multiDispositivo ? '<p class="presencia-alerta" style="color:#6d1f2a">⚠️ Sesión activa en más de un dispositivo</p>' : ''}
-          ${p.otrosEnDispositivo.length ? `<p class="presencia-alerta" style="color:#8a6d1f">Este dispositivo también usó: ${p.otrosEnDispositivo.map(o=>o.nombre+' ('+o.codigo+')').join(', ')}</p>` : ''}
         </div>`;
     }).join('') || '<p style="font-size:13px;color:#777">Nadie ha iniciado sesión hoy.</p>';
-
-    const fallos = Object.entries(dispositivosInfo).filter(([id, info]) => info.intentosFallidos > 0);
-    if (fallos.length) {
-      cont.innerHTML += `<div style="margin-top:16px;padding-top:12px;border-top:2px solid #eee">
-        <div class="cobertura-titulo">Intentos fallidos detectados</div>
-        ${fallos.map(([id, info]) => `<p style="font-size:12px;color:#6d1f2a;margin:4px 0">${info.intentosFallidos} intento(s) fallido(s) desde un dispositivo${info.codigos && info.codigos.length ? ' (usado también por: ' + info.codigos.map(c=>c.nombre).join(', ') + ')' : ''}</p>`).join('')}
-      </div>`;
-    }
   } catch(e) {
     cont.innerHTML = '<p style="color:#6d1f2a;font-size:13px">Error al cargar presencia.</p>';
   }
@@ -1441,6 +1400,7 @@ function cerrarSesion() {
     sesion = null;
     mostrarPaso('pasoLogin');
     document.getElementById('sesionInfo').textContent = '';
+    ocultarFab();
   }
 }
 
@@ -1452,6 +1412,7 @@ function verificarSesionGuardada() {
       sesion = s;
       iniciarPresencia();
       escucharComandos();
+      mostrarFab();
       cargarMaestro().then(() => mostrarPanelMotorizado());
       return;
     } else { localStorage.removeItem('sesionGolan'); }
