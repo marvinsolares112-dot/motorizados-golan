@@ -129,7 +129,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <p class="gps-txt" id="placaNoRegistrada" style="display:none;color:#6d1f2a">Ingresá la placa correcta o comunicate con la Central de Alerta y Respuesta.</p>
     <div id="botonesPlaca" style="display:none" class="grid2">
       <button class="btn btn-green" onclick="irInicioCobertura()">Iniciar cobertura</button>
-      <button class="btn btn-purple" id="btnRepNovedad" onclick="irNovedad()">Reportar novedad</button>
+      <button class="btn btn-purple" id="btnRepNovedad" onclick="irNovedad()">No puedo continuar cobertura</button>
     </div>
     <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:12px">Volver</button>
   </div>
@@ -604,7 +604,7 @@ function actualizarBotonesPanel() {
     banner.style.display = 'none';
     botonesDiv.innerHTML = `
       <button class="btn btn-blue" onclick="irEnviarSeguimiento()" style="margin-top:10px">Enviar seguimiento</button>
-      <button class="btn btn-purple" onclick="irNovedadConRuta()">Reportar novedad</button>
+      <button class="btn btn-purple" onclick="irNovedadConRuta()">No puedo continuar cobertura</button>
       <button class="btn btn-orange" onclick="irFinalizarCobertura()">Finalizar cobertura</button>
       ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cambiarTabAdmin(\'general\')" style="margin-top:8px">Panel administrador</button>' : ''}
     `;
@@ -613,7 +613,7 @@ function actualizarBotonesPanel() {
     badge.style.background = '#6d1f2a';
     banner.style.display = 'none';
     botonesDiv.innerHTML = `
-      <button class="btn btn-green" onclick="irSeleccionarPlaca()" style="margin-top:10px">Iniciar / Reportar novedad</button>
+      <button class="btn btn-green" onclick="irSeleccionarPlaca()" style="margin-top:10px">Iniciar cobertura</button>
       ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cambiarTabAdmin(\'general\')" style="margin-top:8px">Panel administrador</button>' : ''}
     `;
   }
