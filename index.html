@@ -699,6 +699,37 @@ async function sincronizarEstado() {
   } catch(e) { return null; }
 }
 
+// Al iniciar sesión se le pregunta primero al SERVIDOR (el Excel) cómo está el
+// motorizado. Así, si el admin cerró una ruta a mano o si cambió de teléfono,
+// el menú se acomoda solo. Si el servidor no responde, se usa lo guardado en
+// Firebase, como antes.
+async function sincronizarEstadoLogin() {
+  let srv = null;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 12000);
+    const res = await fetch(SCRIPT_URL, {method:'POST', signal: ctrl.signal,
+      body: JSON.stringify({action:'estadoActual', codigo: sesion.codigo})});
+    clearTimeout(t);
+    const d = await res.json();
+    if (d && d.success) srv = d;
+  } catch(e) {}
+  if (!srv) { await sincronizarEstado(); return; }
+  if (srv.estado === 'ninguno') {
+    // "pendiente_inicio" (novedad resuelta, falta iniciar la ruta) solo vive en
+    // Firebase; si el servidor dice "ninguno" no se debe borrar ese estado.
+    try {
+      const doc = await db.collection('estado').doc(sesion.codigo).get();
+      if (doc.exists && doc.data().estado === 'pendiente_inicio') { await sincronizarEstado(); return; }
+    } catch(e) {}
+  }
+  aplicarEstado(srv);
+  guardarEstadoFirebase({
+    estado: srv.estado, placa: srv.placa || '', tipo: srv.tipo || '',
+    hora: srv.hora || '', teniaRuta: !!srv.teniaRuta
+  });
+}
+
 async function guardarEstadoFirebase(obj) {
   try { await db.collection('estado').doc(sesion.codigo).set(obj); } catch(e) {}
 }
@@ -740,7 +771,7 @@ async function mostrarPanelMotorizado() {
   const expira = new Date(sesion.expira);
   document.getElementById('sesionInfo').textContent = `Sesión hasta ${expira.getHours()}:${String(expira.getMinutes()).padStart(2,'0')}`;
   mostrarPaso('pasoMotorizado');
-  await sincronizarEstado();
+  await sincronizarEstadoLogin();
 
   const pendiente = localStorage.getItem('pendienteInicio_' + sesion.codigo);
   if (pendiente) {
