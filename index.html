@@ -78,8 +78,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .conexion.ok .conexion-dot{background:#3ddc84}
 .conexion.lento .conexion-dot{background:#ffc107}
 .conexion.error .conexion-dot{background:#ff5252}
-.footer-creditos{text-align:center;font-size:11px;color:#777;padding:4px 0 90px}
-.footer-creditos a{color:#6d1f2a;cursor:pointer;text-decoration:underline}
+.footer-creditos{text-align:center;font-size:10px;color:#999;padding:4px 0 90px}
+.footer-creditos a{color:#999;cursor:pointer;text-decoration:none}
 .modal-fondo{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:16px}
 .modal-caja{background:white;border-radius:12px;padding:22px;max-width:380px;width:100%;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.35)}
 .modal-caja img{width:64px;height:64px;border-radius:50%;border:2px solid #6d1f2a;object-fit:cover}
@@ -116,6 +116,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <button class="btn btn-red" onclick="hacerLogin()">Ingresar al sistema</button>
     <div class="msg" id="loginMsg"></div>
   </div>
+  <div class="footer-creditos"><a onclick="abrirCreditos()">Acerca de · Créditos</a></div>
 </div>
 
 <!-- PANEL PRINCIPAL -->
@@ -358,8 +359,6 @@ a.btn{display:block;text-align:center;text-decoration:none}
   </div>
 </div>
 
-<div class="footer-creditos"><a onclick="abrirCreditos()">Acerca de · Créditos</a></div>
-
 </div>
 
 <div class="modal-fondo" id="modalCreditos" onclick="if(event.target===this)cerrarCreditos()">
@@ -367,9 +366,9 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <img src="icon-192.png" alt="Logo">
     <h3>Control de Coberturas — CAR</h3>
     <p>Central de Alerta y Respuesta</p>
-    <p><strong>Diseñado y desarrollado por</strong><br>Marvin Solares (ElMervin)<br>Operador CAR</p>
+    <p style="margin-top:14px"><strong>Diseño y desarrollo</strong><br>Marvin Israel Solares</p>
     <p>Creado para facilitar el control de las coberturas de ruta de los motorizados y mejorar la respuesta ante cualquier novedad.</p>
-    <p style="color:#999">Versión <span id="appVersion"></span></p>
+    <p style="color:#999;margin-top:12px">Versión <span id="appVersion"></span></p>
     <button class="btn btn-red" onclick="cerrarCreditos()">Cerrar</button>
   </div>
 </div>
