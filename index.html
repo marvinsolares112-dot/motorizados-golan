@@ -71,6 +71,20 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .sesion-info{font-size:11px;color:rgba(255,255,255,.75);text-align:right}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .novedad-banner{background:#f5efdd;border:1px solid #8a6d1f;border-radius:8px;padding:12px;margin-top:10px;font-size:13px;color:#8a6d1f}
+.header-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.conexion-fila{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.conexion{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:none;color:white;border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit}
+.conexion-dot{width:9px;height:9px;border-radius:50%;background:#9aa0a6;flex-shrink:0}
+.conexion.ok .conexion-dot{background:#3ddc84}
+.conexion.lento .conexion-dot{background:#ffc107}
+.conexion.error .conexion-dot{background:#ff5252}
+.footer-creditos{text-align:center;font-size:11px;color:#777;padding:4px 0 90px}
+.footer-creditos a{color:#6d1f2a;cursor:pointer;text-decoration:underline}
+.modal-fondo{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:16px}
+.modal-caja{background:white;border-radius:12px;padding:22px;max-width:380px;width:100%;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.modal-caja img{width:64px;height:64px;border-radius:50%;border:2px solid #6d1f2a;object-fit:cover}
+.modal-caja h3{font-size:16px;color:#6d1f2a;margin:10px 0 2px}
+.modal-caja p{font-size:12px;color:#555;margin-top:6px;line-height:1.45}
 </style>
 </head>
 <body>
@@ -82,7 +96,13 @@ a.btn{display:block;text-align:center;text-decoration:none}
       <p>CAR — Central de Alerta y Respuesta</p>
     </div>
   </div>
-  <div class="sesion-info" id="sesionInfo"></div>
+  <div class="header-right">
+    <div class="sesion-info" id="sesionInfo"></div>
+    <div class="conexion-fila">
+      <button type="button" class="conexion" id="conexionPill" onclick="verificarConexion(true)" title="Estado de la conexión con el sistema. Tocá para volver a verificar."><span class="conexion-dot"></span><span id="conexionTxt">Verificando…</span></button>
+      <button type="button" class="conexion" id="btnRecargar" onclick="location.reload()" style="display:none">🔄 Recargar</button>
+    </div>
+  </div>
 </div>
 <div class="container">
 
@@ -338,6 +358,20 @@ a.btn{display:block;text-align:center;text-decoration:none}
   </div>
 </div>
 
+<div class="footer-creditos"><a onclick="abrirCreditos()">Acerca de · Créditos</a></div>
+
+</div>
+
+<div class="modal-fondo" id="modalCreditos" onclick="if(event.target===this)cerrarCreditos()">
+  <div class="modal-caja">
+    <img src="icon-192.png" alt="Logo">
+    <h3>Control de Coberturas — CAR</h3>
+    <p>Central de Alerta y Respuesta</p>
+    <p><strong>Diseñado y desarrollado por</strong><br>Marvin Solares (ElMervin)<br>Operador CAR</p>
+    <p>Creado para facilitar el control de las coberturas de ruta de los motorizados y mejorar la respuesta ante cualquier novedad.</p>
+    <p style="color:#999">Versión <span id="appVersion"></span></p>
+    <button class="btn btn-red" onclick="cerrarCreditos()">Cerrar</button>
+  </div>
 </div>
 <a href="tel:+50256950128" class="fab-llamar" id="fabLlamar" title="Llamar a Central de Alerta" aria-label="Llamar a Central de Alerta">📞</a>
 <script>
@@ -382,6 +416,70 @@ function mostrarMsg(id, texto, tipo) {
 function mostrarFab() { document.getElementById('fabLlamar').style.display = 'flex'; }
 function ocultarFab() { document.getElementById('fabLlamar').style.display = 'none'; }
 
+// ---------- Créditos ----------
+const APP_VERSION = '2.0 · octubre 2026';
+function abrirCreditos() {
+  document.getElementById('appVersion').textContent = APP_VERSION;
+  document.getElementById('modalCreditos').style.display = 'flex';
+}
+function cerrarCreditos() { document.getElementById('modalCreditos').style.display = 'none'; }
+
+// ---------- Indicador de conexión ----------
+// SOLO INFORMATIVO: nunca bloquea ni modifica ningún envío. Únicamente avisa al
+// motorizado si conviene recargar antes de mandar un reporte.
+const PING_INTERVALO_MS = 60000;   // cada 60 s mientras la app está a la vista
+const PING_TIMEOUT_MS = 8000;      // si no responde en 8 s, cuenta como fallo
+const PING_LENTO_MS = 4000;        // respuesta más lenta que esto = conexión lenta
+let pingFallos = 0;
+let pingEnCurso = false;
+
+function pintarConexion(estado, texto) {
+  const pill = document.getElementById('conexionPill');
+  if (!pill) return;
+  pill.className = 'conexion ' + estado;
+  document.getElementById('conexionTxt').textContent = texto;
+  document.getElementById('btnRecargar').style.display =
+    (estado === 'ok' || estado === 'verificando') ? 'none' : 'inline-flex';
+}
+
+async function verificarConexion(manual) {
+  if (pingEnCurso) return;
+  pingEnCurso = true;
+  if (manual === true) pintarConexion('verificando', 'Verificando…');
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), PING_TIMEOUT_MS);
+  const t0 = Date.now();
+  let reintentar = false;
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=ping&t=${t0}`, {signal: ctrl.signal, cache: 'no-store'});
+    const data = await res.json();
+    clearTimeout(timer);
+    if (data && data.success) {
+      pingFallos = 0;
+      if (Date.now() - t0 >= PING_LENTO_MS) pintarConexion('lento', 'Conexión lenta');
+      else pintarConexion('ok', 'Conectado');
+    } else {
+      throw new Error('ping sin éxito');
+    }
+  } catch(e) {
+    clearTimeout(timer);
+    pingFallos++;
+    if (navigator.onLine === false) pintarConexion('error', 'Sin internet');
+    else if (pingFallos >= 2) pintarConexion('error', 'Sin conexión');
+    else { pintarConexion('lento', 'Reintentando…'); reintentar = true; }
+  }
+  pingEnCurso = false;
+  if (reintentar) setTimeout(() => verificarConexion(false), 5000);
+}
+
+function iniciarMonitorConexion() {
+  verificarConexion(false);
+  setInterval(() => { if (document.visibilityState === 'visible') verificarConexion(false); }, PING_INTERVALO_MS);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') verificarConexion(false); });
+  window.addEventListener('online', () => verificarConexion(true));
+  window.addEventListener('offline', () => pintarConexion('error', 'Sin internet'));
+}
+
 // ---------- Huella del dispositivo, presencia, comandos remotos ----------
 function obtenerDispositivoId() {
   let id = localStorage.getItem('dispositivoId');
@@ -396,7 +494,7 @@ async function actualizarPresencia() {
   if (!sesion) return;
   try {
     const dispositivoId = obtenerDispositivoId();
-    await db.collection('presenciaDispositivos').doc(sesion.codigo + '_' + dispositivoId).set({
+    await db.collection('presenciaDispositivos').doc(sesion.codigo).set({
       codigo: sesion.codigo, nombre: sesion.nombre, dispositivo: dispositivoId,
       ultimaActividad: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -1133,23 +1231,26 @@ async function cargarPresenciaAdmin() {
   const cont = document.getElementById('listaPresencia');
   cont.innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
   try {
-    const [presSnap, listaRes] = await Promise.all([
-      db.collection('presenciaDispositivos').get(),
-      fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminListaCodigos', codigo: sesion.codigo})}).then(r=>r.json())
-    ]);
+    const listaRes = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminListaCodigos', codigo: sesion.codigo})}).then(r=>r.json());
+    if (!listaRes.success) throw new Error(listaRes.error || 'Sin lista de códigos');
+
+    // La presencia se guarda un documento por código; se lee uno por uno (sin listar la colección)
+    const presDocs = await Promise.all(listaRes.data.map(m =>
+      db.collection('presenciaDispositivos').doc(m.codigo).get().catch(() => null)
+    ));
 
     const ahora = Date.now();
     const porCodigo = {};
-    presSnap.forEach(doc => {
+    presDocs.forEach((doc, i) => {
+      if (!doc || !doc.exists) return;
       const d = doc.data();
+      const codigo = listaRes.data[i].codigo;
       const ms = d.ultimaActividad?.toMillis ? d.ultimaActividad.toMillis() : 0;
-      if (!porCodigo[d.codigo] || ms > porCodigo[d.codigo].ms) {
-        porCodigo[d.codigo] = { codigo: d.codigo, nombre: d.nombre, ms };
-      }
+      porCodigo[codigo] = { codigo: codigo, nombre: d.nombre || listaRes.data[i].nombre, ms };
     });
 
     const infoMap = {};
-    if (listaRes.success) listaRes.data.forEach(m => { infoMap[m.codigo] = m; });
+    listaRes.data.forEach(m => { infoMap[m.codigo] = m; });
 
     let lista = Object.values(porCodigo).map(p => {
       const minutos = Math.floor((ahora - p.ms) / 60000);
@@ -1420,6 +1521,7 @@ function verificarSesionGuardada() {
 }
 
 verificarSesionGuardada();
+iniciarMonitorConexion();
 </script>
 </body>
 </html>
