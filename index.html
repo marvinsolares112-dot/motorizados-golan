@@ -71,6 +71,12 @@ a.btn{display:block;text-align:center;text-decoration:none}
 #mapa-general{height:320px;border-radius:8px;margin-top:10px}
 .sesion-info{font-size:11px;color:rgba(255,255,255,.75);text-align:right}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}
+.grid3 .btn{font-size:12px;padding:10px 4px}
+.cuenta-item{padding:10px 0;border-bottom:1px solid #eee}
+.cuenta-item .acciones{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.etiqueta{display:inline-block;font-size:10px;padding:2px 6px;border-radius:6px;margin-left:4px;background:#eee;color:#555}
+.etiqueta.rojo{background:#f3d9dc;color:#6d1f2a}.etiqueta.amarillo{background:#f6ecc9;color:#8a6d1f}
 .novedad-banner{background:#f5efdd;border:1px solid #8a6d1f;border-radius:8px;padding:12px;margin-top:10px;font-size:13px;color:#8a6d1f}
 .header-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .conexion-fila{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
@@ -114,6 +120,10 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <h2>Identificate</h2>
     <label>Código personal</label>
     <input type="text" id="loginCodigo" placeholder="Tu código personal" style="text-transform:uppercase">
+    <div id="loginClaveBox" style="display:none">
+      <label>Contraseña</label>
+      <input type="password" id="loginClave" placeholder="Tu contraseña" autocomplete="current-password">
+    </div>
     <button class="btn btn-red" onclick="hacerLogin()">🔑 Ingresar al sistema</button>
     <div class="msg" id="loginMsg"></div>
   </div>
@@ -316,9 +326,10 @@ a.btn{display:block;text-align:center;text-decoration:none}
 <div class="step" id="pasoAdmin">
   <div class="card">
     <div class="badge badge-blue">Panel administrador</div>
-    <div class="grid2">
+    <div class="grid2" id="tabsAdminBox">
       <button class="btn btn-blue" id="tabGeneralBtn" onclick="cambiarTabAdmin('general')">📊 General</button>
       <button class="btn btn-gray" id="tabMapaBtn" onclick="cambiarTabAdmin('mapa')">🗺️ Mapa</button>
+      <button class="btn btn-gray" id="tabAdminsBtn" onclick="cambiarTabAdmin('admins')" style="display:none">👥 Admins</button>
     </div>
   </div>
 
@@ -352,6 +363,66 @@ a.btn{display:block;text-align:center;text-decoration:none}
       <h2>Mapa general</h2>
       <button class="btn btn-blue" onclick="cargarMapaGeneral()">🗺️ Ver mapa general</button>
       <div id="mapa-general"></div>
+    </div>
+  </div>
+
+  <div id="tabAdminAdmins" style="display:none">
+    <div class="card">
+      <h2>Cuentas de administración</h2>
+      <button class="btn btn-blue" onclick="abrirFormCuenta('')">➕ Nueva cuenta</button>
+      <div class="msg" id="msgCuentas"></div>
+      <div id="listaCuentas" style="margin-top:12px"></div>
+    </div>
+    <div class="card" id="formCuenta" style="display:none">
+      <h2 id="formCuentaTitulo">Nueva cuenta</h2>
+      <input type="hidden" id="fcObjetivo">
+      <label>Código de acceso</label>
+      <input type="text" id="fcCodigo" placeholder="Ej.: ADMIN03" style="text-transform:uppercase" autocomplete="off">
+      <label>Nombre</label>
+      <input type="text" id="fcNombre" placeholder="Nombre de la persona" autocomplete="off">
+      <div id="fcRolBox">
+        <label>Tipo de cuenta</label>
+        <select id="fcRol" onchange="actualizarFormCuenta()">
+          <option value="especialista">Especialista (solo su operación, solo ver)</option>
+          <option value="admin">Administrador (todas las operaciones)</option>
+        </select>
+      </div>
+      <div id="fcOpBox">
+        <label>Operación (igual que en la columna D del Excel)</label>
+        <input type="text" id="fcOperacion" placeholder="Ej.: EMBOCEN" style="text-transform:uppercase" autocomplete="off">
+      </div>
+      <label id="fcClaveLabel">Contraseña (mínimo 8 caracteres)</label>
+      <input type="text" id="fcClave" autocomplete="off" placeholder="">
+      <div id="fcActualBox" style="display:none">
+        <label>Tu contraseña actual (para confirmar el cambio)</label>
+        <input type="password" id="fcClaveActual" autocomplete="current-password">
+      </div>
+      <button class="btn btn-green" onclick="guardarCuenta()" style="margin-top:10px">💾 Guardar</button>
+      <button class="btn btn-gray" onclick="cerrarFormCuenta()" style="margin-top:8px">Cancelar</button>
+      <div class="msg" id="msgFormCuenta"></div>
+    </div>
+    <div class="card" id="cajaVerClave" style="display:none">
+      <h2 id="verClaveTitulo">Contraseña</h2>
+      <label>Escribí TU contraseña para verla</label>
+      <input type="password" id="verClaveSuper" autocomplete="current-password">
+      <button class="btn btn-blue" onclick="confirmarVerClave()" style="margin-top:10px">👁️ Mostrar</button>
+      <button class="btn btn-gray" onclick="cerrarVerClave()" style="margin-top:8px">Cerrar</button>
+      <div id="verClaveResultado" style="margin-top:10px;font-size:18px;font-weight:bold;word-break:break-all"></div>
+      <div class="msg" id="msgVerClave"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <button class="btn btn-gray" onclick="document.getElementById('cajaMiClave').style.display=document.getElementById('cajaMiClave').style.display==='none'?'block':'none'">🔑 Cambiar mi contraseña</button>
+    <div id="cajaMiClave" style="display:none;margin-top:10px">
+      <label>Contraseña actual</label>
+      <input type="password" id="mcActual" autocomplete="current-password">
+      <label>Contraseña nueva (mínimo 8 caracteres)</label>
+      <input type="password" id="mcNueva" autocomplete="new-password">
+      <label>Repetí la contraseña nueva</label>
+      <input type="password" id="mcNueva2" autocomplete="new-password">
+      <button class="btn btn-green" onclick="cambiarMiClave()" style="margin-top:10px">💾 Enviar</button>
+      <div class="msg" id="msgMiClave"></div>
     </div>
   </div>
 
@@ -539,19 +610,32 @@ function cerrarSesionForzada() {
 async function hacerLogin() {
   const codigo = document.getElementById('loginCodigo').value.trim().toUpperCase();
   if (!codigo) { mostrarMsg('loginMsg', 'Ingresá tu código personal.', 'err'); return; }
+  const clave = document.getElementById('loginClave').value;
   mostrarMsg('loginMsg', 'Verificando...', 'wait');
   try {
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'login', codigo})});
+    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'login', codigo, clave})});
     const data = await res.json();
+    if (data.requierePassword) {
+      document.getElementById('loginClaveBox').style.display = 'block';
+      document.getElementById('loginClave').focus();
+      mostrarMsg('loginMsg', 'Ingresá tu contraseña de administrador.', 'wait');
+      return;
+    }
     if (data.success) {
       sesion = {
         codigo: data.codigo, nombre: data.nombre, placaMoto: data.placaMoto,
         operacion: data.operacion, unidadOperativa: data.unidadOperativa,
-        esAdmin: data.esAdmin, expira: Date.now() + (SESION_HORAS * 60 * 60 * 1000)
+        esAdmin: data.esAdmin, token: data.token || '', rol: data.rol || '',
+        // servidor viejo (sin esSuper/verCodigos): el administrador se trata como principal, igual que antes
+        esSuper: data.esAdmin ? (data.esSuper !== false) : false,
+        verCodigos: data.esAdmin ? (data.verCodigos !== false) : false,
+        expira: Date.now() + (SESION_HORAS * 60 * 60 * 1000)
       };
+      document.getElementById('loginClave').value = '';
+      document.getElementById('loginClaveBox').style.display = 'none';
       localStorage.setItem('sesionGolan', JSON.stringify(sesion));
       await cargarMaestro();
-      iniciarPresencia();
+      if (!sesion.esAdmin) iniciarPresencia();
       escucharComandos();
       mostrarFab();
       await mostrarPanelMotorizado();
@@ -1215,24 +1299,196 @@ async function enviarFinSinCobertura() {
 function cambiarTabAdmin(tab) {
   const general = document.getElementById('tabAdminGeneral');
   const mapa = document.getElementById('tabAdminMapa');
+  const admins = document.getElementById('tabAdminAdmins');
   const btnG = document.getElementById('tabGeneralBtn');
   const btnM = document.getElementById('tabMapaBtn');
-  if (tab === 'general') {
-    general.style.display = 'block'; mapa.style.display = 'none';
-    btnG.className = 'btn btn-blue'; btnM.className = 'btn btn-gray';
-    cargarPresenciaAdmin();
-  } else {
-    general.style.display = 'none'; mapa.style.display = 'block';
-    btnG.className = 'btn btn-gray'; btnM.className = 'btn btn-blue';
-    cargarAdmin();
-  }
+  const btnA = document.getElementById('tabAdminsBtn');
+  const esSuper = !!(sesion && sesion.esSuper && sesion.token);
+  btnA.style.display = esSuper ? 'block' : 'none';
+  document.getElementById('tabsAdminBox').className = esSuper ? 'grid3' : 'grid2';
+  if (tab === 'admins' && !esSuper) tab = 'general';
+  general.style.display = tab === 'general' ? 'block' : 'none';
+  mapa.style.display = tab === 'mapa' ? 'block' : 'none';
+  admins.style.display = tab === 'admins' ? 'block' : 'none';
+  btnG.className = 'btn ' + (tab === 'general' ? 'btn-blue' : 'btn-gray');
+  btnM.className = 'btn ' + (tab === 'mapa' ? 'btn-blue' : 'btn-gray');
+  btnA.className = 'btn ' + (tab === 'admins' ? 'btn-blue' : 'btn-gray');
+  if (tab === 'general') cargarPresenciaAdmin();
+  else if (tab === 'mapa') cargarAdmin();
+  else cargarCuentas();
+}
+
+// ---------- Administración de cuentas (solo administrador principal) ----------
+function escH(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function llamarAdmin(action, extra) {
+  const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify(Object.assign({action, codigo: sesion.codigo, token: sesion.token}, extra || {}))});
+  const data = await res.json();
+  if (data.sesionInvalida) { sesionAdminVencida(data.error); throw new Error('sesion'); }
+  return data;
+}
+
+const ROL_TXT = { super: 'Administrador principal', admin: 'Administrador', especialista: 'Especialista' };
+window._cuentas = [];
+
+async function cargarCuentas() {
+  const cont = document.getElementById('listaCuentas');
+  cont.innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
+  try {
+    const data = await llamarAdmin('adminListaAdmins');
+    if (!data.success) { cont.innerHTML = `<p style="color:#6d1f2a;font-size:13px">${escH(data.error)}</p>`; return; }
+    window._cuentas = data.admins;
+    cont.innerHTML = data.admins.map(a => `
+      <div class="cuenta-item">
+        <strong>${escH(a.nombre)}</strong> <span style="color:#777;font-size:11px">${escH(a.codigo)}</span>
+        ${a.esYo ? '<span class="etiqueta">vos</span>' : ''}${a.bloqueado ? '<span class="etiqueta rojo">Bloqueado</span>' : ''}${a.pendiente ? '<span class="etiqueta amarillo">Cambio de contraseña pendiente</span>' : ''}<br>
+        <span style="font-size:12px;color:#555">${ROL_TXT[a.rol] || a.rol}${a.rol === 'especialista' ? ' · ' + escH(a.operacion) : ' · todas las operaciones'}</span>
+        <div class="acciones">
+          <button class="btn btn-gray btn-sm" onclick="abrirFormCuenta('${a.codigo}')">✏️ Editar</button>
+          ${a.bloqueado ? `<button class="btn btn-gray btn-sm" onclick="desbloquearCuenta('${a.codigo}')">🔓 Desbloquear</button>` : ''}
+          ${a.puedeVerClave ? `<button class="btn btn-gray btn-sm" onclick="abrirVerClave('${a.codigo}', false)">👁️ Ver contraseña</button>` : ''}
+          ${a.pendiente ? `<button class="btn btn-gray btn-sm" onclick="abrirVerClave('${a.codigo}', true)">👁️ Ver la nueva</button>
+            <button class="btn btn-green btn-sm" onclick="resolverCambio('${a.codigo}', true)">✅ Aprobar</button>
+            <button class="btn btn-gray btn-sm" onclick="resolverCambio('${a.codigo}', false)">❌ Rechazar</button>` : ''}
+          ${a.rol !== 'super' ? `<button class="btn btn-gray btn-sm" onclick="eliminarCuenta('${a.codigo}')">🗑️ Eliminar</button>` : ''}
+        </div>
+      </div>`).join('') || '<p style="font-size:13px;color:#777">No hay cuentas.</p>';
+  } catch(e) { if (e.message !== 'sesion') cont.innerHTML = '<p style="color:#6d1f2a;font-size:13px">Error de conexión.</p>'; }
+}
+
+function actualizarFormCuenta() {
+  const esp = document.getElementById('fcRol').value === 'especialista';
+  const objetivo = document.getElementById('fcObjetivo').value;
+  const cuenta = window._cuentas.find(a => a.codigo === objetivo);
+  const esSuperCuenta = !!cuenta && cuenta.rol === 'super';
+  document.getElementById('fcRolBox').style.display = esSuperCuenta ? 'none' : 'block';
+  document.getElementById('fcOpBox').style.display = (esp && !esSuperCuenta) ? 'block' : 'none';
+  document.getElementById('fcActualBox').style.display = (esSuperCuenta && document.getElementById('fcClave').value) ? 'block' : 'none';
+}
+
+function abrirFormCuenta(codigo) {
+  const c = window._cuentas.find(a => a.codigo === codigo);
+  document.getElementById('fcObjetivo').value = c ? c.codigo : '';
+  document.getElementById('formCuentaTitulo').textContent = c ? 'Editar cuenta' : 'Nueva cuenta';
+  document.getElementById('fcCodigo').value = c ? c.codigo : '';
+  document.getElementById('fcNombre').value = c ? c.nombre : '';
+  document.getElementById('fcRol').value = c && c.rol === 'admin' ? 'admin' : 'especialista';
+  document.getElementById('fcOperacion').value = c && c.rol === 'especialista' ? c.operacion : '';
+  document.getElementById('fcClave').value = '';
+  document.getElementById('fcClaveActual').value = '';
+  document.getElementById('fcClaveLabel').textContent = c ? 'Contraseña nueva (dejala vacía para no cambiarla)' : 'Contraseña (mínimo 8 caracteres)';
+  document.getElementById('fcClave').type = (c && c.rol === 'super') ? 'password' : 'text';
+  document.getElementById('fcClave').oninput = actualizarFormCuenta;
+  document.getElementById('msgFormCuenta').style.display = 'none';
+  actualizarFormCuenta();
+  document.getElementById('formCuenta').style.display = 'block';
+  document.getElementById('formCuenta').scrollIntoView({behavior:'smooth'});
+}
+function cerrarFormCuenta() { document.getElementById('formCuenta').style.display = 'none'; document.getElementById('fcClave').value = ''; document.getElementById('fcClaveActual').value = ''; }
+
+async function guardarCuenta() {
+  const objetivo = document.getElementById('fcObjetivo').value;
+  const cuenta = window._cuentas.find(a => a.codigo === objetivo);
+  const cuerpo = {
+    codigoObjetivo: objetivo,
+    codigo: document.getElementById('fcCodigo').value.trim().toUpperCase(),
+    nombre: document.getElementById('fcNombre').value.trim(),
+    rol: document.getElementById('fcRol').value,
+    operacion: document.getElementById('fcOperacion').value.trim().toUpperCase(),
+    clave: document.getElementById('fcClave').value,
+    claveActual: document.getElementById('fcClaveActual').value
+  };
+  mostrarMsg('msgFormCuenta', 'Guardando...', 'wait');
+  try {
+    const data = await llamarAdmin('adminGuardarAdmin', cuerpo);
+    if (!data.success) { mostrarMsg('msgFormCuenta', data.error, 'err'); return; }
+    if (data.nuevoToken) {            // cambiaste TU propio código: la sesión sigue con el código nuevo
+      sesion.codigo = data.nuevoCodigo; sesion.token = data.nuevoToken;
+      localStorage.setItem('sesionGolan', JSON.stringify(sesion));
+    }
+    cerrarFormCuenta();
+    mostrarMsg('msgCuentas', data.mensaje, 'ok');
+    cargarCuentas();
+  } catch(e) { if (e.message !== 'sesion') mostrarMsg('msgFormCuenta', 'Error de conexión.', 'err'); }
+}
+
+async function desbloquearCuenta(codigo) {
+  try {
+    const data = await llamarAdmin('adminDesbloquear', {codigoObjetivo: codigo});
+    mostrarMsg('msgCuentas', data.success ? data.mensaje : data.error, data.success ? 'ok' : 'err');
+    cargarCuentas();
+  } catch(e) { if (e.message !== 'sesion') mostrarMsg('msgCuentas', 'Error de conexión.', 'err'); }
+}
+
+async function eliminarCuenta(codigo) {
+  if (!confirm(`¿Eliminar la cuenta ${codigo}? Ya no va a poder entrar.`)) return;
+  try {
+    const data = await llamarAdmin('adminEliminarAdmin', {codigoObjetivo: codigo});
+    mostrarMsg('msgCuentas', data.success ? data.mensaje : data.error, data.success ? 'ok' : 'err');
+    cargarCuentas();
+  } catch(e) { if (e.message !== 'sesion') mostrarMsg('msgCuentas', 'Error de conexión.', 'err'); }
+}
+
+async function resolverCambio(codigo, aprobar) {
+  if (!confirm(aprobar ? `¿Aprobar la contraseña nueva de ${codigo}?` : `¿Rechazar la solicitud de ${codigo}?`)) return;
+  try {
+    const data = await llamarAdmin('adminResolverCambio', {codigoObjetivo: codigo, aprobar});
+    mostrarMsg('msgCuentas', data.success ? data.mensaje : data.error, data.success ? 'ok' : 'err');
+    cargarCuentas();
+  } catch(e) { if (e.message !== 'sesion') mostrarMsg('msgCuentas', 'Error de conexión.', 'err'); }
+}
+
+let _verClaveObjetivo = null, _verClavePendiente = false, _verClaveTimer = null;
+function abrirVerClave(codigo, pendiente) {
+  _verClaveObjetivo = codigo; _verClavePendiente = pendiente;
+  document.getElementById('verClaveTitulo').textContent = (pendiente ? 'Contraseña nueva de ' : 'Contraseña de ') + codigo;
+  document.getElementById('verClaveSuper').value = '';
+  document.getElementById('verClaveResultado').textContent = '';
+  document.getElementById('msgVerClave').style.display = 'none';
+  document.getElementById('cajaVerClave').style.display = 'block';
+  document.getElementById('cajaVerClave').scrollIntoView({behavior:'smooth'});
+}
+function cerrarVerClave() {
+  if (_verClaveTimer) clearTimeout(_verClaveTimer);
+  document.getElementById('verClaveResultado').textContent = '';
+  document.getElementById('verClaveSuper').value = '';
+  document.getElementById('cajaVerClave').style.display = 'none';
+}
+async function confirmarVerClave() {
+  const claveSuper = document.getElementById('verClaveSuper').value;
+  if (!claveSuper) { mostrarMsg('msgVerClave', 'Escribí tu contraseña.', 'err'); return; }
+  try {
+    const data = await llamarAdmin('adminVerClave', {codigoObjetivo: _verClaveObjetivo, claveSuper, pendiente: _verClavePendiente});
+    document.getElementById('verClaveSuper').value = '';
+    if (!data.success) { mostrarMsg('msgVerClave', data.error, 'err'); return; }
+    document.getElementById('msgVerClave').style.display = 'none';
+    document.getElementById('verClaveResultado').textContent = data.clave;
+    if (_verClaveTimer) clearTimeout(_verClaveTimer);
+    _verClaveTimer = setTimeout(cerrarVerClave, 20000);   // se oculta sola a los 20 segundos
+  } catch(e) { if (e.message !== 'sesion') mostrarMsg('msgVerClave', 'Error de conexión.', 'err'); }
+}
+
+async function cambiarMiClave() {
+  const actual = document.getElementById('mcActual').value;
+  const nueva = document.getElementById('mcNueva').value;
+  const nueva2 = document.getElementById('mcNueva2').value;
+  if (!actual || !nueva) { mostrarMsg('msgMiClave', 'Completá todos los campos.', 'err'); return; }
+  if (nueva !== nueva2) { mostrarMsg('msgMiClave', 'La contraseña nueva no coincide en los dos campos.', 'err'); return; }
+  mostrarMsg('msgMiClave', 'Enviando...', 'wait');
+  try {
+    const data = await llamarAdmin('cambiarMiClave', {claveActual: actual, claveNueva: nueva});
+    if (!data.success) { mostrarMsg('msgMiClave', data.error, 'err'); return; }
+    ['mcActual','mcNueva','mcNueva2'].forEach(i => document.getElementById(i).value = '');
+    mostrarMsg('msgMiClave', data.mensaje, 'ok');
+  } catch(e) { if (e.message !== 'sesion') mostrarMsg('msgMiClave', 'Error de conexión.', 'err'); }
 }
 
 async function cargarPresenciaAdmin() {
   const cont = document.getElementById('listaPresencia');
   cont.innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
   try {
-    const listaRes = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminListaCodigos', codigo: sesion.codigo})}).then(r=>r.json());
+    const listaRes = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminListaCodigos', codigo: sesion.codigo, token: sesion.token})}).then(r=>r.json());
+    if (listaRes.sesionInvalida) { sesionAdminVencida(listaRes.error); return; }
     if (!listaRes.success) throw new Error(listaRes.error || 'Sin lista de códigos');
 
     // La presencia se guarda un documento por código; se lee uno por uno (sin listar la colección)
@@ -1273,7 +1529,7 @@ async function cargarPresenciaAdmin() {
         <div class="presencia-item">
           <div class="presencia-top">
             <div>
-              <strong>${p.nombre}</strong> <span style="color:#777;font-size:11px">${p.codigo}</span><br>
+              <strong>${p.nombre}</strong> ${sesion.verCodigos ? `<span style="color:#777;font-size:11px">${p.codigo}</span>` : ''}<br>
               <span style="font-size:12px;color:${estadoColor}">${estadoTxt}</span>
               ${p.activo === 'No' ? '<span style="color:#6d1f2a;font-size:11px;margin-left:6px">(Desactivado)</span>' : ''}
             </div>
@@ -1294,11 +1550,12 @@ async function toggleActivoCodigo(codigoObjetivo, nuevoEstado) {
   if (!confirm(`¿${nuevoEstado === 'No' ? 'Desactivar' : 'Activar'} el código ${codigoObjetivo}?`)) return;
   try {
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
-      action: 'adminCambiarEstado', codigo: sesion.codigo,
+      action: 'adminCambiarEstado', codigo: sesion.codigo, token: sesion.token,
       codigoObjetivo: codigoObjetivo, nuevoEstado: nuevoEstado
     })});
     const data = await res.json();
     if (data.success) { cargarPresenciaAdmin(); }
+    else if (data.sesionInvalida) { sesionAdminVencida(data.error); }
     else { alert(data.error); }
   } catch(e) { alert('Error de conexión.'); }
 }
@@ -1313,14 +1570,15 @@ async function forzarCierreSesion(codigoObjetivo) {
 async function cargarReportes() {
   document.getElementById('listaReportes').innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
   try {
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminReportes', codigo: sesion.codigo})});
+    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminReportes', codigo: sesion.codigo, token: sesion.token})});
     const data = await res.json();
+    if (data.sesionInvalida) { sesionAdminVencida(data.error); return; }
     if (!data.success) { document.getElementById('listaReportes').innerHTML = `<p style="color:#6d1f2a;font-size:13px">${data.error}</p>`; return; }
     if (!data.reportes.length) { document.getElementById('listaReportes').innerHTML = '<p style="font-size:13px;color:#777">Sin reportes hoy.</p>'; return; }
     document.getElementById('listaReportes').innerHTML = data.reportes.map(r => `
       <div class="reporte-card">
         <div class="reporte-tipo">${r.tipoNovedad} — <span style="color:${r.estado==='Activa'?'#6d1f2a':'#2d6a4f'}">${r.estado}</span></div>
-        <div class="reporte-info">${r.nombre} (${r.codigo}) — ${r.hora}</div>
+        <div class="reporte-info">${r.nombre}${sesion.verCodigos && r.codigo ? ` (${r.codigo})` : ''} — ${r.hora}</div>
         <div class="reporte-info">Unidad: <strong>${r.placaUnidad}</strong></div>
         ${r.descripcion?`<div class="reporte-info">${r.descripcion}</div>`:''}
         ${r.horaRetoma?`<div class="reporte-info">Retomó: ${r.horaRetoma} | Sin cobertura: ${r.tiempoSin}</div>`:''}
@@ -1332,14 +1590,15 @@ async function cargarReportes() {
 async function cargarAdmin() {
   document.getElementById('listaMotorizados').innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
   try {
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminMotorizados', codigo: sesion.codigo})});
+    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminMotorizados', codigo: sesion.codigo, token: sesion.token})});
     const data = await res.json();
+    if (data.sesionInvalida) { sesionAdminVencida(data.error); return; }
     if (!data.success) { document.getElementById('listaMotorizados').innerHTML = `<p style="color:#6d1f2a;font-size:13px">${data.error}</p>`; return; }
     if (!data.motorizados.length) { document.getElementById('listaMotorizados').innerHTML = '<p style="font-size:13px;color:#777">Ningún motorizado activo hoy.</p>'; return; }
     document.getElementById('listaMotorizados').innerHTML = data.motorizados.map(m => `
       <div class="mot-card" onclick="verDetalle('${m.codigo}')">
         <div class="mot-nombre">${m.nombre}</div>
-        <div class="mot-info">Código: ${m.codigo} | Moto: ${m.placaMoto}</div>
+        <div class="mot-info">${sesion.verCodigos ? `Código: ${m.codigo} | ` : ''}Moto: ${m.placaMoto}</div>
         <div class="mot-info">${m.puntos.length} registros — Último: ${m.puntos[m.puntos.length-1]?.tipo} a las ${m.puntos[m.puntos.length-1]?.hora}</div>
       </div>`).join('');
     window._adminData = data.motorizados;
@@ -1499,11 +1758,30 @@ function cerrarSesion() {
     localStorage.removeItem('placaActiva_' + sesion?.codigo);
     localStorage.removeItem('novedad_' + sesion?.codigo);
     localStorage.removeItem('pendienteInicio_' + sesion?.codigo);
+    try { cerrarVerClave(); } catch(e) {}
+    ['mcActual','mcNueva','mcNueva2'].forEach(i => { const el = document.getElementById(i); if (el) el.value = ''; });
     sesion = null;
+    document.getElementById('loginClave').value = '';
+    document.getElementById('loginClaveBox').style.display = 'none';
     mostrarPaso('pasoLogin');
     document.getElementById('sesionInfo').textContent = '';
     ocultarFab();
   }
+}
+
+function sesionAdminVencida(msg) {
+  try { cerrarVerClave(); } catch(e) {}
+  ['mcActual','mcNueva','mcNueva2'].forEach(i => { const el = document.getElementById(i); if (el) el.value = ''; });
+  if (window._heartbeatInterval) clearInterval(window._heartbeatInterval);
+  if (window._comandosUnsub) window._comandosUnsub();
+  localStorage.removeItem('sesionGolan');
+  sesion = null;
+  document.getElementById('loginClave').value = '';
+  document.getElementById('loginClaveBox').style.display = 'none';
+  mostrarPaso('pasoLogin');
+  document.getElementById('sesionInfo').textContent = '';
+  ocultarFab();
+  mostrarMsg('loginMsg', msg || 'Tu sesión venció. Ingresá de nuevo.', 'err');
 }
 
 function verificarSesionGuardada() {
@@ -1512,7 +1790,9 @@ function verificarSesionGuardada() {
     const s = JSON.parse(guardada);
     if (Date.now() < s.expira) {
       sesion = s;
-      iniciarPresencia();
+      if (sesion.esAdmin && sesion.esSuper === undefined) sesion.esSuper = true; // sesión guardada antes de este cambio
+      if (sesion.esAdmin && sesion.verCodigos === undefined) sesion.verCodigos = sesion.esSuper !== false;
+      if (!sesion.esAdmin) iniciarPresencia();
       escucharComandos();
       mostrarFab();
       cargarMaestro().then(() => mostrarPanelMotorizado());
