@@ -29,8 +29,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#6d1f2a;backgr
 .btn-blue{background:#1f4e6b;color:white}
 .btn-green{background:#2d6a4f;color:white}
 .btn-gray{background:#5a6570;color:white}
-.btn-orange{background:#b5502e;color:white}
-.btn-purple{background:#8a6d1f;color:white}
+.btn-orange{background:#c2410c;color:white}
+.btn-purple{background:#9a6700;color:white}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-sm{width:auto;padding:6px 10px;margin:0;font-size:11px;border-radius:6px}
 a.btn{display:block;text-align:center;text-decoration:none}
@@ -113,7 +113,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <h2>Identificate</h2>
     <label>Código personal</label>
     <input type="text" id="loginCodigo" placeholder="Tu código personal" style="text-transform:uppercase">
-    <button class="btn btn-red" onclick="hacerLogin()">Ingresar al sistema</button>
+    <button class="btn btn-red" onclick="hacerLogin()">🔑 Ingresar al sistema</button>
     <div class="msg" id="loginMsg"></div>
   </div>
   <div class="footer-creditos"><a onclick="abrirCreditos()">Acerca de · Créditos</a></div>
@@ -131,7 +131,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     </div>
     <div id="novedadBanner" class="novedad-banner" style="display:none"></div>
     <div id="botonesPanel"></div>
-    <button class="btn btn-gray" onclick="cerrarSesion()" style="margin-top:12px;font-size:12px;padding:8px">Cerrar sesión</button>
+    <button class="btn btn-gray" onclick="cerrarSesion()" style="margin-top:12px;font-size:12px;padding:8px">🔒 Cerrar sesión</button>
   </div>
 </div>
 
@@ -149,10 +149,10 @@ a.btn{display:block;text-align:center;text-decoration:none}
     </div>
     <p class="gps-txt" id="placaNoRegistrada" style="display:none;color:#6d1f2a">Ingresá la placa correcta o comunicate con la Central de Alerta y Respuesta.</p>
     <div id="botonesPlaca" style="display:none" class="grid2">
-      <button class="btn btn-green" onclick="irInicioCobertura()">Iniciar cobertura</button>
-      <button class="btn btn-purple" id="btnRepNovedad" onclick="irNovedad()">No puedo continuar cobertura</button>
+      <button class="btn btn-green" onclick="irInicioCobertura()">▶️ Iniciar cobertura</button>
+      <button class="btn btn-purple" id="btnRepNovedad" onclick="irNovedad()">⚠️ No puedo continuar cobertura</button>
     </div>
-    <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:12px">Volver</button>
+    <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:12px">⬅️ Volver</button>
   </div>
 </div>
 
@@ -163,13 +163,13 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <h2>Registrar inicio</h2>
     <div class="info-box" id="infoInicioResumen"></div>
     <label>Ubicación GPS</label>
-    <button class="btn btn-blue" onclick="capturarGPS('inicioGps','inicioGpsTxt')">Capturar ubicación</button>
+    <button class="btn btn-blue" onclick="capturarGPS('inicioGps','inicioGpsTxt')">📍 Capturar ubicación</button>
     <p class="gps-txt" id="inicioGpsTxt">Sin ubicación</p>
-    <label>Foto de la unidad (obligatoria)</label>
+    <label>📸 Foto de la unidad (obligatoria)</label>
     <input type="file" id="inicioFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('inicioFoto','inicioFotoPreview')">
     <img id="inicioFotoPreview" class="foto-preview">
-    <button class="btn btn-green" onclick="enviarInicioRuta()">Confirmar inicio</button>
-    <button class="btn btn-gray" onclick="irAtras()">Volver</button>
+    <button class="btn btn-green" onclick="enviarInicioRuta()">✅ Confirmar inicio</button>
+    <button class="btn btn-gray" onclick="irAtras()">⬅️ Volver</button>
     <div class="msg" id="inicioMsg"></div>
   </div>
 </div>
@@ -180,13 +180,13 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <div class="badge badge-blue">Seguimiento</div>
     <h2>Reporte de seguimiento</h2>
     <label>Ubicación GPS</label>
-    <button class="btn btn-blue" onclick="capturarGPS('segGps','segGpsTxt')">Capturar ubicación</button>
+    <button class="btn btn-blue" onclick="capturarGPS('segGps','segGpsTxt')">📍 Capturar ubicación</button>
     <p class="gps-txt" id="segGpsTxt">Sin ubicación</p>
-    <label>Foto (obligatoria)</label>
+    <label>📸 Foto (obligatoria)</label>
     <input type="file" id="segFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('segFoto','segFotoPreview')">
     <img id="segFotoPreview" class="foto-preview">
-    <button class="btn btn-blue" onclick="enviarSeguimiento()">Enviar seguimiento</button>
-    <button class="btn btn-gray" onclick="volverPanel()">Volver</button>
+    <button class="btn btn-blue" onclick="enviarSeguimiento()">📋 Enviar seguimiento</button>
+    <button class="btn btn-gray" onclick="volverPanel()">⬅️ Volver</button>
     <div class="msg" id="segMsg"></div>
   </div>
 </div>
@@ -197,9 +197,9 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <div class="badge badge-orange">Finalizar cobertura</div>
     <h2>Cierre de cobertura</h2>
     <label>Ubicación GPS</label>
-    <button class="btn btn-blue" onclick="capturarGPS('finGps','finGpsTxt')">Capturar ubicación</button>
+    <button class="btn btn-blue" onclick="capturarGPS('finGps','finGpsTxt')">📍 Capturar ubicación</button>
     <p class="gps-txt" id="finGpsTxt">Sin ubicación</p>
-    <label>Foto de cierre (obligatoria)</label>
+    <label>📸 Foto de cierre (obligatoria)</label>
     <input type="file" id="finFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('finFoto','finFotoPreview')">
     <img id="finFotoPreview" class="foto-preview">
     <label>¿Realizó rondas?</label>
@@ -223,8 +223,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
     </div>
     <label>Observaciones</label>
     <textarea id="finObs" rows="2" placeholder="Opcional..."></textarea>
-    <button class="btn btn-orange" onclick="enviarFin()">Finalizar cobertura</button>
-    <button class="btn btn-gray" onclick="volverPanel()">Volver</button>
+    <button class="btn btn-orange" onclick="enviarFin()">🏁 Finalizar cobertura</button>
+    <button class="btn btn-gray" onclick="volverPanel()">⬅️ Volver</button>
     <div class="msg" id="finMsg"></div>
   </div>
 </div>
@@ -249,15 +249,15 @@ a.btn{display:block;text-align:center;text-decoration:none}
       <option>Otro</option>
     </select>
     <label>Ubicación GPS</label>
-    <button class="btn btn-blue" onclick="capturarGPS('novGps','novGpsTxt')">Capturar ubicación</button>
+    <button class="btn btn-blue" onclick="capturarGPS('novGps','novGpsTxt')">📍 Capturar ubicación</button>
     <p class="gps-txt" id="novGpsTxt">Sin ubicación</p>
-    <label>Foto de evidencia (obligatoria)</label>
+    <label>📸 Foto de evidencia (obligatoria)</label>
     <input type="file" id="novFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('novFoto','novFotoPreview')">
     <img id="novFotoPreview" class="foto-preview">
     <label>Descripción</label>
     <textarea id="novedadDesc" rows="3" placeholder="Describí lo que ocurrió..."></textarea>
-    <button class="btn btn-purple" onclick="enviarNovedad()">Enviar reporte</button>
-    <button class="btn btn-gray" onclick="volverPanel()">Volver</button>
+    <button class="btn btn-purple" onclick="enviarNovedad()">📨 Enviar reporte</button>
+    <button class="btn btn-gray" onclick="volverPanel()">⬅️ Volver</button>
     <div class="msg" id="novMsg"></div>
   </div>
 </div>
@@ -269,7 +269,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <h2>¿Qué hacés ahora?</h2>
     <div class="novedad-banner" id="resumenNovedad"></div>
     <div id="opcionesPostNovedad" style="margin-top:8px"></div>
-    <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:8px">Volver al panel</button>
+    <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:8px">⬅️ Volver al panel</button>
   </div>
 </div>
 
@@ -280,13 +280,13 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <h2>¿Dónde se resolvió?</h2>
     <p style="font-size:13px;color:#555;margin-top:4px;margin-bottom:8px">Capturá tu ubicación y una foto del lugar donde se resolvió el incidente.</p>
     <label>Ubicación GPS</label>
-    <button class="btn btn-blue" onclick="capturarGPS('finIncGps','finIncGpsTxt')">Capturar ubicación</button>
+    <button class="btn btn-blue" onclick="capturarGPS('finIncGps','finIncGpsTxt')">📍 Capturar ubicación</button>
     <p class="gps-txt" id="finIncGpsTxt">Sin ubicación</p>
-    <label>Foto de cierre del incidente (obligatoria)</label>
+    <label>📸 Foto de cierre del incidente (obligatoria)</label>
     <input type="file" id="finIncFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('finIncFoto','finIncFotoPreview')">
     <img id="finIncFotoPreview" class="foto-preview">
-    <button class="btn btn-green" id="btnConfirmarFinInc" onclick="confirmarFinalizarIncidente()">Confirmar — incidente resuelto</button>
-    <button class="btn btn-gray" onclick="mostrarPaso('pasoPostNovedad')">Volver</button>
+    <button class="btn btn-green" id="btnConfirmarFinInc" onclick="confirmarFinalizarIncidente()">✅ Confirmar — incidente resuelto</button>
+    <button class="btn btn-gray" onclick="mostrarPaso('pasoPostNovedad')">⬅️ Volver</button>
     <div class="msg" id="finIncMsg"></div>
   </div>
 </div>
@@ -298,15 +298,15 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <h2>No se pudo brindar apoyo</h2>
     <p style="font-size:13px;color:#555;margin-top:8px">Esto registrará que la unidad no recibió cobertura.</p>
     <label>Ubicación GPS</label>
-    <button class="btn btn-blue" onclick="capturarGPS('finSinGps','finSinGpsTxt')">Capturar ubicación</button>
+    <button class="btn btn-blue" onclick="capturarGPS('finSinGps','finSinGpsTxt')">📍 Capturar ubicación</button>
     <p class="gps-txt" id="finSinGpsTxt">Sin ubicación</p>
-    <label>Foto (obligatoria)</label>
+    <label>📸 Foto (obligatoria)</label>
     <input type="file" id="finSinFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('finSinFoto','finSinFotoPreview')">
     <img id="finSinFotoPreview" class="foto-preview">
     <label>Observaciones</label>
     <textarea id="finSinObs" rows="2" placeholder="Opcional..."></textarea>
-    <button class="btn btn-red" onclick="enviarFinSinCobertura()" style="margin-top:16px">Confirmar sin cobertura</button>
-    <button class="btn btn-gray" onclick="mostrarPaso('pasoPostNovedad')">Volver</button>
+    <button class="btn btn-red" onclick="enviarFinSinCobertura()" style="margin-top:16px">🚫 Confirmar sin cobertura</button>
+    <button class="btn btn-gray" onclick="mostrarPaso('pasoPostNovedad')">⬅️ Volver</button>
     <div class="msg" id="finSinMsg"></div>
   </div>
 </div>
@@ -316,20 +316,20 @@ a.btn{display:block;text-align:center;text-decoration:none}
   <div class="card">
     <div class="badge badge-blue">Panel administrador</div>
     <div class="grid2">
-      <button class="btn btn-blue" id="tabGeneralBtn" onclick="cambiarTabAdmin('general')">General</button>
-      <button class="btn btn-gray" id="tabMapaBtn" onclick="cambiarTabAdmin('mapa')">Mapa</button>
+      <button class="btn btn-blue" id="tabGeneralBtn" onclick="cambiarTabAdmin('general')">📊 General</button>
+      <button class="btn btn-gray" id="tabMapaBtn" onclick="cambiarTabAdmin('mapa')">🗺️ Mapa</button>
     </div>
   </div>
 
   <div id="tabAdminGeneral">
     <div class="card">
       <h2>Motorizados — presencia</h2>
-      <button class="btn btn-blue" onclick="cargarPresenciaAdmin()">Actualizar</button>
+      <button class="btn btn-blue" onclick="cargarPresenciaAdmin()">🔄 Actualizar</button>
       <div id="listaPresencia" style="margin-top:12px"></div>
     </div>
     <div class="card">
       <h2>Reportes del día</h2>
-      <button class="btn btn-purple" onclick="cargarReportes()">Ver reportes</button>
+      <button class="btn btn-purple" onclick="cargarReportes()">📑 Ver reportes</button>
       <div id="listaReportes" style="margin-top:12px"></div>
     </div>
   </div>
@@ -337,7 +337,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
   <div id="tabAdminMapa" style="display:none">
     <div class="card">
       <h2>Control de motorizados</h2>
-      <button class="btn btn-blue" onclick="cargarAdmin()">Actualizar</button>
+      <button class="btn btn-blue" onclick="cargarAdmin()">🔄 Actualizar</button>
       <div id="listaMotorizados" style="margin-top:12px"></div>
     </div>
     <div class="card" id="detalleMotorizado" style="display:none">
@@ -349,13 +349,13 @@ a.btn{display:block;text-align:center;text-decoration:none}
     </div>
     <div class="card">
       <h2>Mapa general</h2>
-      <button class="btn btn-blue" onclick="cargarMapaGeneral()">Ver mapa general</button>
+      <button class="btn btn-blue" onclick="cargarMapaGeneral()">🗺️ Ver mapa general</button>
       <div id="mapa-general"></div>
     </div>
   </div>
 
   <div class="card">
-    <button class="btn btn-gray" onclick="volverPanel()">Volver</button>
+    <button class="btn btn-gray" onclick="volverPanel()">⬅️ Volver</button>
   </div>
 </div>
 
@@ -686,13 +686,13 @@ function actualizarBotonesPanel() {
 
     if (novedadActiva.teniaRuta) {
       botonesDiv.innerHTML = `
-        <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:10px">Se resolvió — Continuar cobertura</button>
-        <button class="btn btn-red" onclick="irFinSinCobertura()">No se resolvió — Finalizar</button>
+        <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:10px">✅ Se resolvió — Continuar cobertura</button>
+        <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No se resolvió — Finalizar</button>
       `;
     } else {
       botonesDiv.innerHTML = `
-        <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:10px">Se resolvió — Iniciar cobertura</button>
-        <button class="btn btn-red" onclick="irFinSinCobertura()">No se resolvió — Finalizar sin cobertura</button>
+        <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:10px">✅ Se resolvió — Iniciar cobertura</button>
+        <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No se resolvió — Finalizar sin cobertura</button>
       `;
     }
   } else if (rutaActiva) {
@@ -700,18 +700,18 @@ function actualizarBotonesPanel() {
     badge.style.background = '#2d6a4f';
     banner.style.display = 'none';
     botonesDiv.innerHTML = `
-      <button class="btn btn-blue" onclick="irEnviarSeguimiento()" style="margin-top:10px">Enviar seguimiento</button>
-      <button class="btn btn-purple" onclick="irNovedadConRuta()">No puedo continuar cobertura</button>
-      <button class="btn btn-orange" onclick="irFinalizarCobertura()">Finalizar cobertura</button>
-      ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cambiarTabAdmin(\'general\')" style="margin-top:8px">Panel administrador</button>' : ''}
+      <button class="btn btn-blue" onclick="irEnviarSeguimiento()" style="margin-top:10px">📋 Enviar seguimiento</button>
+      <button class="btn btn-purple" onclick="irNovedadConRuta()">⚠️ No puedo continuar cobertura</button>
+      <button class="btn btn-orange" onclick="irFinalizarCobertura()">🏁 Finalizar cobertura</button>
+      ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cambiarTabAdmin(\'general\')" style="margin-top:8px">🛠️ Panel administrador</button>' : ''}
     `;
   } else {
     badge.textContent = 'Sin ruta activa';
     badge.style.background = '#6d1f2a';
     banner.style.display = 'none';
     botonesDiv.innerHTML = `
-      <button class="btn btn-green" onclick="irSeleccionarPlaca()" style="margin-top:10px">Iniciar cobertura</button>
-      ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cambiarTabAdmin(\'general\')" style="margin-top:8px">Panel administrador</button>' : ''}
+      <button class="btn btn-green" onclick="irSeleccionarPlaca()" style="margin-top:10px">▶️ Iniciar cobertura</button>
+      ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cambiarTabAdmin(\'general\')" style="margin-top:8px">🛠️ Panel administrador</button>' : ''}
     `;
   }
 }
@@ -792,7 +792,7 @@ async function confirmarFinalizarIncidente() {
       mostrarMsg('finIncMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
     }
   }
-  btn.disabled = false; btn.textContent = 'Confirmar — incidente resuelto';
+  btn.disabled = false; btn.textContent = '✅ Confirmar — incidente resuelto';
 }
 
 function irSeleccionarPlaca() {
@@ -1003,7 +1003,7 @@ async function enviarInicioRuta() {
       mostrarMsg('inicioMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
     }
   }
-  btn.disabled = false; btn.textContent = 'Confirmar inicio';
+  btn.disabled = false; btn.textContent = '✅ Confirmar inicio';
 }
 
 async function enviarSeguimiento() {
@@ -1028,7 +1028,7 @@ async function enviarSeguimiento() {
   } catch(e) {
     mostrarMsg('segMsg', 'Error de conexión. Si el problema persiste, tocá enviar de nuevo — no hay riesgo de duplicar el seguimiento.', 'err');
   }
-  btn.disabled = false; btn.textContent = 'Enviar seguimiento';
+  btn.disabled = false; btn.textContent = '📋 Enviar seguimiento';
 }
 
 async function enviarFin() {
@@ -1082,7 +1082,7 @@ async function enviarFin() {
       mostrarMsg('finMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
     }
   }
-  btn.disabled = false; btn.textContent = 'Finalizar cobertura';
+  btn.disabled = false; btn.textContent = '🏁 Finalizar cobertura';
 }
 
 async function enviarNovedad() {
@@ -1130,7 +1130,7 @@ async function enviarNovedad() {
       mostrarMsg('novMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
     }
   }
-  btn.disabled = false; btn.textContent = 'Enviar reporte';
+  btn.disabled = false; btn.textContent = '📨 Enviar reporte';
 }
 
 function mostrarPostNovedad(tipo, placa, hora, teniaRuta, descripcion) {
@@ -1140,13 +1140,13 @@ function mostrarPostNovedad(tipo, placa, hora, teniaRuta, descripcion) {
     `<strong>${tipo}</strong> reportada a las ${hora}<br>Unidad afectada: <strong>${placa}</strong>`;
   if (teniaRuta) {
     document.getElementById('opcionesPostNovedad').innerHTML = `
-      <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:8px">Se resolvió — Continuar cobertura</button>
-      <button class="btn btn-red" onclick="irFinSinCobertura()">No se resolvió — Finalizar</button>
+      <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:8px">✅ Se resolvió — Continuar cobertura</button>
+      <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No se resolvió — Finalizar</button>
     `;
   } else {
     document.getElementById('opcionesPostNovedad').innerHTML = `
-      <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:8px">Se resolvió — Iniciar cobertura</button>
-      <button class="btn btn-red" onclick="irFinSinCobertura()">No se resolvió — Finalizar sin cobertura</button>
+      <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:8px">✅ Se resolvió — Iniciar cobertura</button>
+      <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No se resolvió — Finalizar sin cobertura</button>
     `;
   }
   mostrarPaso('pasoPostNovedad');
@@ -1207,7 +1207,7 @@ async function enviarFinSinCobertura() {
       mostrarMsg('finSinMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
     }
   }
-  btn.disabled = false; btn.textContent = 'Confirmar sin cobertura';
+  btn.disabled = false; btn.textContent = '🚫 Confirmar sin cobertura';
 }
 
 function cambiarTabAdmin(tab) {
@@ -1278,7 +1278,7 @@ async function cargarPresenciaAdmin() {
             ${p.puedeGestionar ? `
             <div class="presencia-acciones">
               <button class="btn btn-gray btn-sm" onclick="toggleActivoCodigo('${p.codigo}','${p.activo==='No'?'Sí':'No'}')">${p.activo==='No'?'Activar':'Desactivar'}</button>
-              <button class="btn btn-gray btn-sm" onclick="forzarCierreSesion('${p.codigo}')">Cerrar sesión</button>
+              <button class="btn btn-gray btn-sm" onclick="forzarCierreSesion('${p.codigo}')">🔒 Cerrar sesión</button>
             </div>` : ''}
           </div>
         </div>`;
@@ -1437,18 +1437,18 @@ async function cargarMapaGeneral() {
 
 function capturarGPS(key, txtId) {
   const btn = event.target;
-  btn.disabled = true; btn.textContent = 'Capturando...';
+  btn.disabled = true; btn.textContent = '📡 Capturando...';
   navigator.geolocation.getCurrentPosition(
     pos => {
       gpsData[key] = {lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6)};
       document.getElementById(txtId).textContent = `${gpsData[key].lat}, ${gpsData[key].lng}`;
       document.getElementById(txtId).style.color = '#2d6a4f';
-      btn.textContent = 'Ubicación capturada'; btn.disabled = false;
+      btn.textContent = '✅ Ubicación capturada'; btn.disabled = false;
     },
     () => {
       document.getElementById(txtId).textContent = 'No se pudo obtener ubicación';
       document.getElementById(txtId).style.color = '#6d1f2a';
-      btn.textContent = 'Reintentar'; btn.disabled = false;
+      btn.textContent = '🔄 Reintentar'; btn.disabled = false;
     },
     {enableHighAccuracy:true, timeout:10000}
   );
