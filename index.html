@@ -35,6 +35,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#6d1f2a;backgr
 .btn-sm{width:auto;padding:6px 10px;margin:0;font-size:11px;border-radius:6px}
 a.btn{display:block;text-align:center;text-decoration:none}
 .fab-llamar{position:fixed;bottom:20px;right:20px;width:58px;height:58px;border-radius:50%;background:#1f4e6b;color:white;display:none;align-items:center;justify-content:center;font-size:26px;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,.35);z-index:999}
+.fab-texto{position:fixed;bottom:33px;right:88px;background:#1f4e6b;color:white;font-size:12px;font-weight:bold;padding:8px 12px;border-radius:20px;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,.35);z-index:999;display:none;line-height:1.1;max-width:150px;text-align:center}
 .info-box{background:#f2f2f2;border:1px solid #ccc;border-radius:8px;padding:10px;margin-top:10px;font-size:12px}
 .info-row{display:flex;justify-content:space-between;margin-bottom:3px}
 .info-label{color:#777}
@@ -372,6 +373,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <button class="btn btn-red" onclick="cerrarCreditos()">Cerrar</button>
   </div>
 </div>
+<a href="tel:+50256950128" class="fab-texto" id="fabTexto">Llamar a Central de Alerta</a>
 <a href="tel:+50256950128" class="fab-llamar" id="fabLlamar" title="Llamar a Central de Alerta" aria-label="Llamar a Central de Alerta">📞</a>
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYCl3ZYGpRWbDNST6Di7lCBrHWpoCLjhTzjzYuCEzCeJVbxN94KTtu_duPXont5tWSfA/exec";
@@ -412,8 +414,8 @@ function mostrarMsg(id, texto, tipo) {
   if (tipo === 'ok') setTimeout(() => el.style.display = 'none', 4000);
 }
 
-function mostrarFab() { document.getElementById('fabLlamar').style.display = 'flex'; }
-function ocultarFab() { document.getElementById('fabLlamar').style.display = 'none'; }
+function mostrarFab() { document.getElementById('fabLlamar').style.display = 'flex'; document.getElementById('fabTexto').style.display = 'block'; }
+function ocultarFab() { document.getElementById('fabLlamar').style.display = 'none'; document.getElementById('fabTexto').style.display = 'none'; }
 
 // ---------- Créditos ----------
 const APP_VERSION = '2.0 · octubre 2026';
