@@ -650,7 +650,7 @@ async function hacerLogin() {
       document.getElementById('loginClaveBox').style.display = 'none';
       localStorage.setItem('sesionGolan', JSON.stringify(sesion));
       await cargarMaestro();
-      if (!sesion.esAdmin) iniciarPresencia();
+      iniciarPresencia();
       escucharComandos();
       mostrarFab();
       await mostrarPanelMotorizado();
@@ -1387,7 +1387,7 @@ async function cargarCuentas() {
     cont.innerHTML = data.admins.map(a => `
       <div class="cuenta-item">
         <strong>${escH(a.nombre)}</strong> <span style="color:#777;font-size:11px">${escH(a.codigo)}</span>
-        ${a.esYo ? '<span class="etiqueta">vos</span>' : ''}${a.bloqueado ? '<span class="etiqueta rojo">Bloqueado</span>' : ''}${a.pendiente ? '<span class="etiqueta amarillo">Cambio de contraseña pendiente</span>' : ''}<br>
+        ${a.esYo ? '<span class="etiqueta">vos</span>' : ''}${a.bloqueado ? '<span class="etiqueta rojo">Bloqueado</span>' : ''}${a.activo === false ? '<span class="etiqueta rojo">Desactivada</span>' : ''}${a.pendiente ? '<span class="etiqueta amarillo">Cambio de contraseña pendiente</span>' : ''}<br>
         <span style="font-size:12px;color:#555">${ROL_TXT[a.rol] || a.rol}${a.rol === 'especialista' ? ' · ' + escH(a.operacion) : ' · todas las operaciones'}</span>
         <div class="acciones">
           <button class="btn btn-gray btn-sm" onclick="abrirFormCuenta('${a.codigo}')">✏️ Editar</button>
@@ -1560,7 +1560,9 @@ async function cargarPresenciaAdmin() {
       return {
         codigo: p.codigo, nombre: p.nombre, minutos,
         activo: infoMap[p.codigo]?.activo ?? 'Sí',
-        puedeGestionar: infoMap[p.codigo]?.puedeGestionar ?? false
+        puedeGestionar: infoMap[p.codigo]?.puedeGestionar ?? false,
+        esCuentaAdmin: !!infoMap[p.codigo]?.esCuentaAdmin,
+        rol: infoMap[p.codigo]?.rol || ''
       };
     });
 
@@ -1575,13 +1577,13 @@ async function cargarPresenciaAdmin() {
         <div class="presencia-item">
           <div class="presencia-top">
             <div>
-              <strong>${p.nombre}</strong> ${sesion.verCodigos ? `<span style="color:#777;font-size:11px">${p.codigo}</span>` : ''}<br>
+              <strong>${escH(p.nombre)}</strong> ${sesion.verCodigos ? `<span style="color:#777;font-size:11px">${escH(p.codigo)}</span>` : ''}${p.esCuentaAdmin ? `<span class="etiqueta">${escH(ROL_TXT[p.rol] || 'Administrador')}</span>` : ''}<br>
               <span style="font-size:12px;color:${estadoColor}">${estadoTxt}</span>
               ${p.activo === 'No' ? '<span style="color:#6d1f2a;font-size:11px;margin-left:6px">(Desactivado)</span>' : ''}
             </div>
             ${p.puedeGestionar ? `
             <div class="presencia-acciones">
-              <button class="btn btn-gray btn-sm" onclick="toggleActivoCodigo('${p.codigo}','${p.activo==='No'?'Sí':'No'}')">${p.activo==='No'?'Activar':'Desactivar'}</button>
+              <button class="btn btn-gray btn-sm" onclick="toggleActivoCodigo('${p.codigo}','${p.activo==='No'?'Sí':'No'}',${p.esCuentaAdmin})">${p.activo==='No'?'Activar':'Desactivar'}</button>
               <button class="btn btn-gray btn-sm" onclick="forzarCierreSesion('${p.codigo}')">🚪 Cerrar sesión</button>
             </div>` : ''}
           </div>
@@ -1592,15 +1594,20 @@ async function cargarPresenciaAdmin() {
   }
 }
 
-async function toggleActivoCodigo(codigoObjetivo, nuevoEstado) {
-  if (!confirm(`¿${nuevoEstado === 'No' ? 'Desactivar' : 'Activar'} el código ${codigoObjetivo}?`)) return;
+async function toggleActivoCodigo(codigoObjetivo, nuevoEstado, esCuentaAdmin) {
+  if (!confirm(`¿${nuevoEstado === 'No' ? 'Desactivar' : 'Activar'} el código ${codigoObjetivo}?` +
+      (esCuentaAdmin && nuevoEstado === 'No' ? ' Su sesión se cerrará y no podrá entrar hasta que lo actives otra vez.' : ''))) return;
   try {
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
       action: 'adminCambiarEstado', codigo: sesion.codigo, token: sesion.token,
       codigoObjetivo: codigoObjetivo, nuevoEstado: nuevoEstado
     })});
     const data = await res.json();
-    if (data.success) { cargarPresenciaAdmin(); }
+    if (data.success) {
+      // al desactivar una cuenta de administrador, también se le cierra la sesión que tenga abierta
+      if (esCuentaAdmin && nuevoEstado === 'No') { try { await db.collection('comandos').doc(codigoObjetivo).set({ cerrarSesion: true, hora: Date.now() }); } catch(e) {} }
+      cargarPresenciaAdmin();
+    }
     else if (data.sesionInvalida) { sesionAdminVencida(data.error); }
     else { alert(data.error); }
   } catch(e) { alert('Error de conexión.'); }
@@ -1838,7 +1845,7 @@ function verificarSesionGuardada() {
       sesion = s;
       if (sesion.esAdmin && sesion.esSuper === undefined) sesion.esSuper = true; // sesión guardada antes de este cambio
       if (sesion.esAdmin && sesion.verCodigos === undefined) sesion.verCodigos = sesion.esSuper !== false;
-      if (!sesion.esAdmin) iniciarPresencia();
+      iniciarPresencia();
       escucharComandos();
       mostrarFab();
       cargarMaestro().then(() => mostrarPanelMotorizado());
