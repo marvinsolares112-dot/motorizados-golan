@@ -12,7 +12,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:#e9e9e9;min-height:100vh;padding-bottom:84px}
+body{font-family:Arial,sans-serif;background:#e9e9e9;min-height:100vh}
 .header{background:#1a1a1a;color:white;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .header-left{display:flex;align-items:center;gap:10px}
 .header-logo{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #6d1f2a;flex-shrink:0}
@@ -29,15 +29,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#6d1f2a;backgr
 .btn-blue{background:#1f4e6b;color:white}
 .btn-green{background:#2d6a4f;color:white}
 .btn-gray{background:#5a6570;color:white}
-.btn-orange{background:#c2410c;color:white}
-.btn-purple{background:#9a6700;color:white}
+.btn-orange{background:#b5502e;color:white}
+.btn-purple{background:#8a6d1f;color:white}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-sm{width:auto;padding:6px 10px;margin:0;font-size:11px;border-radius:6px}
 a.btn{display:block;text-align:center;text-decoration:none}
-.fab-llamar{position:fixed;bottom:18px;right:16px;width:50px;height:50px;border-radius:50%;background:#fff;border:2.5px solid #c62828;color:#c62828;display:none;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 3px 10px rgba(0,0,0,.28);z-index:999}
-.fab-llamar svg{width:24px;height:24px;fill:#c62828}
-.fab-texto{position:fixed;bottom:26px;right:74px;background:#fff;color:#c62828;border:2px solid #c62828;font-size:12px;font-weight:bold;padding:7px 12px;border-radius:20px;text-decoration:none;box-shadow:0 3px 10px rgba(0,0,0,.28);z-index:999;display:none;line-height:1.1;max-width:150px;text-align:center;transition:opacity .6s}
-.fab-texto.oculto{opacity:0;pointer-events:none}
+.fab-llamar{position:fixed;bottom:20px;right:20px;width:58px;height:58px;border-radius:50%;background:#1f4e6b;color:white;display:none;align-items:center;justify-content:center;font-size:26px;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,.35);z-index:999}
 .info-box{background:#f2f2f2;border:1px solid #ccc;border-radius:8px;padding:10px;margin-top:10px;font-size:12px}
 .info-row{display:flex;justify-content:space-between;margin-bottom:3px}
 .info-label{color:#777}
@@ -73,27 +70,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
 #mapa-general{height:320px;border-radius:8px;margin-top:10px}
 .sesion-info{font-size:11px;color:rgba(255,255,255,.75);text-align:right}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}
-.grid3 .btn{font-size:12px;padding:10px 4px}
-.cuenta-item{padding:10px 0;border-bottom:1px solid #eee}
-.cuenta-item .acciones{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.etiqueta{display:inline-block;font-size:10px;padding:2px 6px;border-radius:6px;margin-left:4px;background:#eee;color:#555}
-.etiqueta.rojo{background:#f3d9dc;color:#6d1f2a}.etiqueta.amarillo{background:#f6ecc9;color:#8a6d1f}
 .novedad-banner{background:#f5efdd;border:1px solid #8a6d1f;border-radius:8px;padding:12px;margin-top:10px;font-size:13px;color:#8a6d1f}
-.header-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
-.conexion-fila{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
-.conexion{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:none;color:white;border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit}
-.conexion-dot{width:9px;height:9px;border-radius:50%;background:#9aa0a6;flex-shrink:0}
-.conexion.ok .conexion-dot{background:#3ddc84}
-.conexion.lento .conexion-dot{background:#ffc107}
-.conexion.error .conexion-dot{background:#ff5252}
-.footer-creditos{text-align:center;font-size:10px;color:#999;padding:4px 0 90px}
-.footer-creditos a{color:#999;cursor:pointer;text-decoration:none}
-.modal-fondo{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:16px}
-.modal-caja{background:white;border-radius:12px;padding:22px;max-width:380px;width:100%;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.35)}
-.modal-caja img{width:64px;height:64px;border-radius:50%;border:2px solid #6d1f2a;object-fit:cover}
-.modal-caja h3{font-size:16px;color:#6d1f2a;margin:10px 0 2px}
-.modal-caja p{font-size:12px;color:#555;margin-top:6px;line-height:1.45}
 </style>
 </head>
 <body>
@@ -105,13 +82,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
       <p>CAR — Central de Alerta y Respuesta</p>
     </div>
   </div>
-  <div class="header-right">
-    <div class="sesion-info" id="sesionInfo"></div>
-    <div class="conexion-fila">
-      <button type="button" class="conexion" id="conexionPill" onclick="verificarConexion(true)" title="Estado de la conexión con el sistema. Tocá para volver a verificar."><span class="conexion-dot"></span><span id="conexionTxt">Verificando…</span></button>
-      <button type="button" class="conexion" id="btnRecargar" onclick="location.reload()" style="display:none">🔄 Recargar</button>
-    </div>
-  </div>
+  <div class="sesion-info" id="sesionInfo"></div>
 </div>
 <div class="container">
 
@@ -122,14 +93,9 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <h2>Identificate</h2>
     <label>Código personal</label>
     <input type="text" id="loginCodigo" placeholder="Tu código personal" style="text-transform:uppercase">
-    <div id="loginClaveBox" style="display:none">
-      <label>Contraseña</label>
-      <input type="password" id="loginClave" placeholder="Tu contraseña" autocomplete="current-password">
-    </div>
-    <button class="btn btn-red" onclick="hacerLogin()">🔑 Ingresar al sistema</button>
+    <button class="btn btn-red" onclick="hacerLogin()">Ingresar al sistema</button>
     <div class="msg" id="loginMsg"></div>
   </div>
-  <div class="footer-creditos"><a onclick="abrirCreditos()">Acerca de · Créditos</a></div>
 </div>
 
 <!-- PANEL PRINCIPAL -->
@@ -144,7 +110,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     </div>
     <div id="novedadBanner" class="novedad-banner" style="display:none"></div>
     <div id="botonesPanel"></div>
-    <button class="btn btn-gray" onclick="cerrarSesion()" style="margin-top:12px;font-size:12px;padding:8px">🚪 Cerrar sesión</button>
+    <button class="btn btn-gray" onclick="cerrarSesion()" style="margin-top:12px;font-size:12px;padding:8px">Cerrar sesión</button>
   </div>
 </div>
 
@@ -162,10 +128,10 @@ a.btn{display:block;text-align:center;text-decoration:none}
     </div>
     <p class="gps-txt" id="placaNoRegistrada" style="display:none;color:#6d1f2a">Ingresá la placa correcta o comunicate con la Central de Alerta y Respuesta.</p>
     <div id="botonesPlaca" style="display:none" class="grid2">
-      <button class="btn btn-green" onclick="irInicioCobertura()">🏍️ Iniciar cobertura</button>
-      <button class="btn btn-purple" id="btnRepNovedad" onclick="irNovedad()">🔧 No puedo iniciar cobertura</button>
+      <button class="btn btn-green" onclick="irInicioCobertura()">Iniciar cobertura</button>
+      <button class="btn btn-purple" id="btnRepNovedad" onclick="irNovedad()">No puedo continuar cobertura</button>
     </div>
-    <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:12px">⬅️ Volver</button>
+    <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:12px">Volver</button>
   </div>
 </div>
 
@@ -176,13 +142,13 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <h2>Registrar inicio</h2>
     <div class="info-box" id="infoInicioResumen"></div>
     <label>Ubicación GPS</label>
-    <button class="btn btn-blue" onclick="capturarGPS('inicioGps','inicioGpsTxt')">📍 Capturar ubicación</button>
+    <button class="btn btn-blue" onclick="capturarGPS('inicioGps','inicioGpsTxt')">Capturar ubicación</button>
     <p class="gps-txt" id="inicioGpsTxt">Sin ubicación</p>
-    <label>📸 Foto de la unidad (obligatoria)</label>
+    <label>Foto de la unidad (obligatoria)</label>
     <input type="file" id="inicioFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('inicioFoto','inicioFotoPreview')">
     <img id="inicioFotoPreview" class="foto-preview">
-    <button class="btn btn-green" onclick="enviarInicioRuta()">✅ Confirmar inicio</button>
-    <button class="btn btn-gray" onclick="irAtras()">⬅️ Volver</button>
+    <button class="btn btn-green" onclick="enviarInicioRuta()">Confirmar inicio</button>
+    <button class="btn btn-gray" onclick="irAtras()">Volver</button>
     <div class="msg" id="inicioMsg"></div>
   </div>
 </div>
@@ -193,13 +159,13 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <div class="badge badge-blue">Seguimiento</div>
     <h2>Reporte de seguimiento</h2>
     <label>Ubicación GPS</label>
-    <button class="btn btn-blue" onclick="capturarGPS('segGps','segGpsTxt')">📍 Capturar ubicación</button>
+    <button class="btn btn-blue" onclick="capturarGPS('segGps','segGpsTxt')">Capturar ubicación</button>
     <p class="gps-txt" id="segGpsTxt">Sin ubicación</p>
-    <label>📸 Foto (obligatoria)</label>
+    <label>Foto (obligatoria)</label>
     <input type="file" id="segFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('segFoto','segFotoPreview')">
     <img id="segFotoPreview" class="foto-preview">
-    <button class="btn btn-blue" onclick="enviarSeguimiento()">📋 Enviar seguimiento</button>
-    <button class="btn btn-gray" onclick="volverPanel()">⬅️ Volver</button>
+    <button class="btn btn-blue" onclick="enviarSeguimiento()">Enviar seguimiento</button>
+    <button class="btn btn-gray" onclick="volverPanel()">Volver</button>
     <div class="msg" id="segMsg"></div>
   </div>
 </div>
@@ -210,9 +176,9 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <div class="badge badge-orange">Finalizar cobertura</div>
     <h2>Cierre de cobertura</h2>
     <label>Ubicación GPS</label>
-    <button class="btn btn-blue" onclick="capturarGPS('finGps','finGpsTxt')">📍 Capturar ubicación</button>
+    <button class="btn btn-blue" onclick="capturarGPS('finGps','finGpsTxt')">Capturar ubicación</button>
     <p class="gps-txt" id="finGpsTxt">Sin ubicación</p>
-    <label>📸 Foto de cierre (obligatoria)</label>
+    <label>Foto de cierre (obligatoria)</label>
     <input type="file" id="finFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('finFoto','finFotoPreview')">
     <img id="finFotoPreview" class="foto-preview">
     <label>¿Realizó rondas?</label>
@@ -236,8 +202,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
     </div>
     <label>Observaciones</label>
     <textarea id="finObs" rows="2" placeholder="Opcional..."></textarea>
-    <button class="btn btn-orange" onclick="enviarFin()">🏁 Finalizar cobertura</button>
-    <button class="btn btn-gray" onclick="volverPanel()">⬅️ Volver</button>
+    <button class="btn btn-orange" onclick="enviarFin()">Finalizar cobertura</button>
+    <button class="btn btn-gray" onclick="volverPanel()">Volver</button>
     <div class="msg" id="finMsg"></div>
   </div>
 </div>
@@ -262,15 +228,15 @@ a.btn{display:block;text-align:center;text-decoration:none}
       <option>Otro</option>
     </select>
     <label>Ubicación GPS</label>
-    <button class="btn btn-blue" onclick="capturarGPS('novGps','novGpsTxt')">📍 Capturar ubicación</button>
+    <button class="btn btn-blue" onclick="capturarGPS('novGps','novGpsTxt')">Capturar ubicación</button>
     <p class="gps-txt" id="novGpsTxt">Sin ubicación</p>
-    <label>📸 Foto de evidencia (obligatoria)</label>
+    <label>Foto de evidencia (obligatoria)</label>
     <input type="file" id="novFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('novFoto','novFotoPreview')">
     <img id="novFotoPreview" class="foto-preview">
     <label>Descripción</label>
     <textarea id="novedadDesc" rows="3" placeholder="Describí lo que ocurrió..."></textarea>
-    <button class="btn btn-purple" onclick="enviarNovedad()">📨 Enviar reporte</button>
-    <button class="btn btn-gray" onclick="volverPanel()">⬅️ Volver</button>
+    <button class="btn btn-purple" onclick="enviarNovedad()">Enviar reporte</button>
+    <button class="btn btn-gray" onclick="volverPanel()">Volver</button>
     <div class="msg" id="novMsg"></div>
   </div>
 </div>
@@ -282,7 +248,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <h2>¿Qué hacés ahora?</h2>
     <div class="novedad-banner" id="resumenNovedad"></div>
     <div id="opcionesPostNovedad" style="margin-top:8px"></div>
-    <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:8px">⬅️ Volver al panel</button>
+    <button class="btn btn-gray" onclick="volverPanel()" style="margin-top:8px">Volver al panel</button>
   </div>
 </div>
 
@@ -293,13 +259,13 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <h2>¿Dónde se resolvió?</h2>
     <p style="font-size:13px;color:#555;margin-top:4px;margin-bottom:8px">Capturá tu ubicación y una foto del lugar donde se resolvió el incidente.</p>
     <label>Ubicación GPS</label>
-    <button class="btn btn-blue" onclick="capturarGPS('finIncGps','finIncGpsTxt')">📍 Capturar ubicación</button>
+    <button class="btn btn-blue" onclick="capturarGPS('finIncGps','finIncGpsTxt')">Capturar ubicación</button>
     <p class="gps-txt" id="finIncGpsTxt">Sin ubicación</p>
-    <label>📸 Foto de cierre del incidente (obligatoria)</label>
+    <label>Foto de cierre del incidente (obligatoria)</label>
     <input type="file" id="finIncFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('finIncFoto','finIncFotoPreview')">
     <img id="finIncFotoPreview" class="foto-preview">
-    <button class="btn btn-green" id="btnConfirmarFinInc" onclick="confirmarFinalizarIncidente()">✅ Confirmar — incidente resuelto</button>
-    <button class="btn btn-gray" onclick="mostrarPaso('pasoPostNovedad')">⬅️ Volver</button>
+    <button class="btn btn-green" id="btnConfirmarFinInc" onclick="confirmarFinalizarIncidente()">Confirmar — incidente resuelto</button>
+    <button class="btn btn-gray" onclick="mostrarPaso('pasoPostNovedad')">Volver</button>
     <div class="msg" id="finIncMsg"></div>
   </div>
 </div>
@@ -311,15 +277,15 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <h2>No se pudo brindar apoyo</h2>
     <p style="font-size:13px;color:#555;margin-top:8px">Esto registrará que la unidad no recibió cobertura.</p>
     <label>Ubicación GPS</label>
-    <button class="btn btn-blue" onclick="capturarGPS('finSinGps','finSinGpsTxt')">📍 Capturar ubicación</button>
+    <button class="btn btn-blue" onclick="capturarGPS('finSinGps','finSinGpsTxt')">Capturar ubicación</button>
     <p class="gps-txt" id="finSinGpsTxt">Sin ubicación</p>
-    <label>📸 Foto (obligatoria)</label>
+    <label>Foto (obligatoria)</label>
     <input type="file" id="finSinFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('finSinFoto','finSinFotoPreview')">
     <img id="finSinFotoPreview" class="foto-preview">
     <label>Observaciones</label>
     <textarea id="finSinObs" rows="2" placeholder="Opcional..."></textarea>
-    <button class="btn btn-red" onclick="enviarFinSinCobertura()" style="margin-top:16px">🚫 Confirmar sin cobertura</button>
-    <button class="btn btn-gray" onclick="mostrarPaso('pasoPostNovedad')">⬅️ Volver</button>
+    <button class="btn btn-red" onclick="enviarFinSinCobertura()" style="margin-top:16px">Confirmar sin cobertura</button>
+    <button class="btn btn-gray" onclick="mostrarPaso('pasoPostNovedad')">Volver</button>
     <div class="msg" id="finSinMsg"></div>
   </div>
 </div>
@@ -328,22 +294,21 @@ a.btn{display:block;text-align:center;text-decoration:none}
 <div class="step" id="pasoAdmin">
   <div class="card">
     <div class="badge badge-blue">Panel administrador</div>
-    <div class="grid2" id="tabsAdminBox">
-      <button class="btn btn-blue" id="tabGeneralBtn" onclick="cambiarTabAdmin('general')">📊 General</button>
-      <button class="btn btn-gray" id="tabMapaBtn" onclick="cambiarTabAdmin('mapa')">🗺️ Mapa</button>
-      <button class="btn btn-gray" id="tabAdminsBtn" onclick="cambiarTabAdmin('admins')" style="display:none">👥 Admins</button>
+    <div class="grid2">
+      <button class="btn btn-blue" id="tabGeneralBtn" onclick="cambiarTabAdmin('general')">General</button>
+      <button class="btn btn-gray" id="tabMapaBtn" onclick="cambiarTabAdmin('mapa')">Mapa</button>
     </div>
   </div>
 
   <div id="tabAdminGeneral">
     <div class="card">
       <h2>Motorizados — presencia</h2>
-      <button class="btn btn-blue" onclick="cargarPresenciaAdmin()">🔄 Actualizar</button>
+      <button class="btn btn-blue" onclick="cargarPresenciaAdmin()">Actualizar</button>
       <div id="listaPresencia" style="margin-top:12px"></div>
     </div>
     <div class="card">
       <h2>Reportes del día</h2>
-      <button class="btn btn-purple" onclick="cargarReportes()">📑 Ver reportes</button>
+      <button class="btn btn-purple" onclick="cargarReportes()">Ver reportes</button>
       <div id="listaReportes" style="margin-top:12px"></div>
     </div>
   </div>
@@ -351,7 +316,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
   <div id="tabAdminMapa" style="display:none">
     <div class="card">
       <h2>Control de motorizados</h2>
-      <button class="btn btn-blue" onclick="cargarAdmin()">🔄 Actualizar</button>
+      <button class="btn btn-blue" onclick="cargarAdmin()">Actualizar</button>
       <div id="listaMotorizados" style="margin-top:12px"></div>
     </div>
     <div class="card" id="detalleMotorizado" style="display:none">
@@ -363,91 +328,18 @@ a.btn{display:block;text-align:center;text-decoration:none}
     </div>
     <div class="card">
       <h2>Mapa general</h2>
-      <button class="btn btn-blue" onclick="cargarMapaGeneral()">🗺️ Ver mapa general</button>
+      <button class="btn btn-blue" onclick="cargarMapaGeneral()">Ver mapa general</button>
       <div id="mapa-general"></div>
     </div>
   </div>
 
-  <div id="tabAdminAdmins" style="display:none">
-    <div class="card">
-      <h2>Cuentas de administración</h2>
-      <button class="btn btn-blue" onclick="abrirFormCuenta('')">➕ Nueva cuenta</button>
-      <div class="msg" id="msgCuentas"></div>
-      <div id="listaCuentas" style="margin-top:12px"></div>
-    </div>
-    <div class="card" id="formCuenta" style="display:none">
-      <h2 id="formCuentaTitulo">Nueva cuenta</h2>
-      <input type="hidden" id="fcObjetivo">
-      <label>Código de acceso</label>
-      <input type="text" id="fcCodigo" placeholder="Ej.: ADMIN03" style="text-transform:uppercase" autocomplete="off">
-      <label>Nombre</label>
-      <input type="text" id="fcNombre" placeholder="Nombre de la persona" autocomplete="off">
-      <div id="fcRolBox">
-        <label>Tipo de cuenta</label>
-        <select id="fcRol" onchange="actualizarFormCuenta()">
-          <option value="especialista">Especialista (solo su operación, solo ver)</option>
-          <option value="admin">Administrador (todas las operaciones)</option>
-        </select>
-      </div>
-      <div id="fcOpBox">
-        <label>Operación (igual que en la columna D del Excel)</label>
-        <input type="text" id="fcOperacion" placeholder="Ej.: EMBOCEN" style="text-transform:uppercase" autocomplete="off">
-      </div>
-      <label id="fcClaveLabel">Contraseña (mínimo 8 caracteres)</label>
-      <input type="text" id="fcClave" autocomplete="off" placeholder="">
-      <div id="fcActualBox" style="display:none">
-        <label>Tu contraseña actual (para confirmar el cambio)</label>
-        <input type="password" id="fcClaveActual" autocomplete="current-password">
-      </div>
-      <button class="btn btn-green" onclick="guardarCuenta()" style="margin-top:10px">💾 Guardar</button>
-      <button class="btn btn-gray" onclick="cerrarFormCuenta()" style="margin-top:8px">Cancelar</button>
-      <div class="msg" id="msgFormCuenta"></div>
-    </div>
-    <div class="card" id="cajaVerClave" style="display:none">
-      <h2 id="verClaveTitulo">Contraseña</h2>
-      <label>Escribí TU contraseña para verla</label>
-      <input type="password" id="verClaveSuper" autocomplete="current-password">
-      <button class="btn btn-blue" onclick="confirmarVerClave()" style="margin-top:10px">👁️ Mostrar</button>
-      <button class="btn btn-gray" onclick="cerrarVerClave()" style="margin-top:8px">Cerrar</button>
-      <div id="verClaveResultado" style="margin-top:10px;font-size:18px;font-weight:bold;word-break:break-all"></div>
-      <div class="msg" id="msgVerClave"></div>
-    </div>
-  </div>
-
   <div class="card">
-    <button class="btn btn-gray" onclick="document.getElementById('cajaMiClave').style.display=document.getElementById('cajaMiClave').style.display==='none'?'block':'none'">🔑 Cambiar mi contraseña</button>
-    <div id="cajaMiClave" style="display:none;margin-top:10px">
-      <label>Contraseña actual</label>
-      <input type="password" id="mcActual" autocomplete="current-password">
-      <label>Contraseña nueva (mínimo 8 caracteres)</label>
-      <input type="password" id="mcNueva" autocomplete="new-password">
-      <label>Repetí la contraseña nueva</label>
-      <input type="password" id="mcNueva2" autocomplete="new-password">
-      <button class="btn btn-green" onclick="cambiarMiClave()" style="margin-top:10px">💾 Enviar</button>
-      <div class="msg" id="msgMiClave"></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <button class="btn btn-gray" onclick="volverPanel()">⬅️ Volver</button>
+    <button class="btn btn-gray" onclick="volverPanel()">Volver</button>
   </div>
 </div>
 
 </div>
-
-<div class="modal-fondo" id="modalCreditos" onclick="if(event.target===this)cerrarCreditos()">
-  <div class="modal-caja">
-    <img src="icon-192.png" alt="Logo">
-    <h3>Control de Coberturas — CAR</h3>
-    <p>Central de Alerta y Respuesta</p>
-    <p style="margin-top:14px"><strong>Diseño y desarrollo</strong><br>Marvin Israel Solares</p>
-    <p>Creado para facilitar el control de las coberturas de ruta de los motorizados y mejorar la respuesta ante cualquier novedad.</p>
-    <p style="color:#999;margin-top:12px">Versión <span id="appVersion"></span></p>
-    <button class="btn btn-red" onclick="cerrarCreditos()">Cerrar</button>
-  </div>
-</div>
-<a href="tel:+50256950128" class="fab-texto" id="fabTexto">Llamar a Central de Alerta</a>
-<a href="tel:+50256950128" class="fab-llamar" id="fabLlamar" title="Llamar a Central de Alerta" aria-label="Llamar a Central de Alerta"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"/></svg></a>
+<a href="tel:+50256950128" class="fab-llamar" id="fabLlamar" title="Llamar a Central de Alerta" aria-label="Llamar a Central de Alerta">📞</a>
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYCl3ZYGpRWbDNST6Di7lCBrHWpoCLjhTzjzYuCEzCeJVbxN94KTtu_duPXont5tWSfA/exec";
 const SESION_HORAS = 20;
@@ -487,85 +379,8 @@ function mostrarMsg(id, texto, tipo) {
   if (tipo === 'ok') setTimeout(() => el.style.display = 'none', 4000);
 }
 
-let fabTimer = null;
-// Muestra el botón de llamar. El letrero aparece unos segundos y luego se esconde
-// para no tapar la pantalla; el círculo rojo se queda siempre.
-function mostrarFab() {
-  const txt = document.getElementById('fabTexto');
-  document.getElementById('fabLlamar').style.display = 'flex';
-  txt.style.display = 'block'; txt.classList.remove('oculto');
-  clearTimeout(fabTimer);
-  fabTimer = setTimeout(() => txt.classList.add('oculto'), 5000);
-}
-function ocultarFab() {
-  clearTimeout(fabTimer);
-  document.getElementById('fabLlamar').style.display = 'none';
-  document.getElementById('fabTexto').style.display = 'none';
-}
-
-// ---------- Créditos ----------
-const APP_VERSION = '2.0 · octubre 2026';
-function abrirCreditos() {
-  document.getElementById('appVersion').textContent = APP_VERSION;
-  document.getElementById('modalCreditos').style.display = 'flex';
-}
-function cerrarCreditos() { document.getElementById('modalCreditos').style.display = 'none'; }
-
-// ---------- Indicador de conexión ----------
-// SOLO INFORMATIVO: nunca bloquea ni modifica ningún envío. Únicamente avisa al
-// motorizado si conviene recargar antes de mandar un reporte.
-const PING_INTERVALO_MS = 60000;   // cada 60 s mientras la app está a la vista
-const PING_TIMEOUT_MS = 8000;      // si no responde en 8 s, cuenta como fallo
-const PING_LENTO_MS = 4000;        // respuesta más lenta que esto = conexión lenta
-let pingFallos = 0;
-let pingEnCurso = false;
-
-function pintarConexion(estado, texto) {
-  const pill = document.getElementById('conexionPill');
-  if (!pill) return;
-  pill.className = 'conexion ' + estado;
-  document.getElementById('conexionTxt').textContent = texto;
-  document.getElementById('btnRecargar').style.display =
-    (estado === 'ok' || estado === 'verificando') ? 'none' : 'inline-flex';
-}
-
-async function verificarConexion(manual) {
-  if (pingEnCurso) return;
-  pingEnCurso = true;
-  if (manual === true) pintarConexion('verificando', 'Verificando…');
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), PING_TIMEOUT_MS);
-  const t0 = Date.now();
-  let reintentar = false;
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=ping&t=${t0}`, {signal: ctrl.signal, cache: 'no-store'});
-    const data = await res.json();
-    clearTimeout(timer);
-    if (data && data.success) {
-      pingFallos = 0;
-      if (Date.now() - t0 >= PING_LENTO_MS) pintarConexion('lento', 'Conexión lenta');
-      else pintarConexion('ok', 'Conectado');
-    } else {
-      throw new Error('ping sin éxito');
-    }
-  } catch(e) {
-    clearTimeout(timer);
-    pingFallos++;
-    if (navigator.onLine === false) pintarConexion('error', 'Sin internet');
-    else if (pingFallos >= 2) pintarConexion('error', 'Sin conexión');
-    else { pintarConexion('lento', 'Reintentando…'); reintentar = true; }
-  }
-  pingEnCurso = false;
-  if (reintentar) setTimeout(() => verificarConexion(false), 5000);
-}
-
-function iniciarMonitorConexion() {
-  verificarConexion(false);
-  setInterval(() => { if (document.visibilityState === 'visible') verificarConexion(false); }, PING_INTERVALO_MS);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') verificarConexion(false); });
-  window.addEventListener('online', () => verificarConexion(true));
-  window.addEventListener('offline', () => pintarConexion('error', 'Sin internet'));
-}
+function mostrarFab() { document.getElementById('fabLlamar').style.display = 'flex'; }
+function ocultarFab() { document.getElementById('fabLlamar').style.display = 'none'; }
 
 // ---------- Huella del dispositivo, presencia, comandos remotos ----------
 function obtenerDispositivoId() {
@@ -581,7 +396,7 @@ async function actualizarPresencia() {
   if (!sesion) return;
   try {
     const dispositivoId = obtenerDispositivoId();
-    await db.collection('presenciaDispositivos').doc(sesion.codigo).set({
+    await db.collection('presenciaDispositivos').doc(sesion.codigo + '_' + dispositivoId).set({
       codigo: sesion.codigo, nombre: sesion.nombre, dispositivo: dispositivoId,
       ultimaActividad: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -625,29 +440,16 @@ function cerrarSesionForzada() {
 async function hacerLogin() {
   const codigo = document.getElementById('loginCodigo').value.trim().toUpperCase();
   if (!codigo) { mostrarMsg('loginMsg', 'Ingresá tu código personal.', 'err'); return; }
-  const clave = document.getElementById('loginClave').value;
   mostrarMsg('loginMsg', 'Verificando...', 'wait');
   try {
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'login', codigo, clave})});
+    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'login', codigo})});
     const data = await res.json();
-    if (data.requierePassword) {
-      document.getElementById('loginClaveBox').style.display = 'block';
-      document.getElementById('loginClave').focus();
-      mostrarMsg('loginMsg', 'Ingresá tu contraseña de administrador.', 'wait');
-      return;
-    }
     if (data.success) {
       sesion = {
         codigo: data.codigo, nombre: data.nombre, placaMoto: data.placaMoto,
         operacion: data.operacion, unidadOperativa: data.unidadOperativa,
-        esAdmin: data.esAdmin, token: data.token || '', rol: data.rol || '',
-        // servidor viejo (sin esSuper/verCodigos): el administrador se trata como principal, igual que antes
-        esSuper: data.esAdmin ? (data.esSuper !== false) : false,
-        verCodigos: data.esAdmin ? (data.verCodigos !== false) : false,
-        expira: Date.now() + (SESION_HORAS * 60 * 60 * 1000)
+        esAdmin: data.esAdmin, expira: Date.now() + (SESION_HORAS * 60 * 60 * 1000)
       };
-      document.getElementById('loginClave').value = '';
-      document.getElementById('loginClaveBox').style.display = 'none';
       localStorage.setItem('sesionGolan', JSON.stringify(sesion));
       await cargarMaestro();
       iniciarPresencia();
@@ -714,37 +516,6 @@ async function sincronizarEstado() {
   } catch(e) { return null; }
 }
 
-// Al iniciar sesión se le pregunta primero al SERVIDOR (el Excel) cómo está el
-// motorizado. Así, si el admin cerró una ruta a mano o si cambió de teléfono,
-// el menú se acomoda solo. Si el servidor no responde, se usa lo guardado en
-// Firebase, como antes.
-async function sincronizarEstadoLogin() {
-  let srv = null;
-  try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 12000);
-    const res = await fetch(SCRIPT_URL, {method:'POST', signal: ctrl.signal,
-      body: JSON.stringify({action:'estadoActual', codigo: sesion.codigo})});
-    clearTimeout(t);
-    const d = await res.json();
-    if (d && d.success) srv = d;
-  } catch(e) {}
-  if (!srv) { await sincronizarEstado(); return; }
-  if (srv.estado === 'ninguno') {
-    // "pendiente_inicio" (novedad resuelta, falta iniciar la ruta) solo vive en
-    // Firebase; si el servidor dice "ninguno" no se debe borrar ese estado.
-    try {
-      const doc = await db.collection('estado').doc(sesion.codigo).get();
-      if (doc.exists && doc.data().estado === 'pendiente_inicio') { await sincronizarEstado(); return; }
-    } catch(e) {}
-  }
-  aplicarEstado(srv);
-  guardarEstadoFirebase({
-    estado: srv.estado, placa: srv.placa || '', tipo: srv.tipo || '',
-    hora: srv.hora || '', teniaRuta: !!srv.teniaRuta
-  });
-}
-
 async function guardarEstadoFirebase(obj) {
   try { await db.collection('estado').doc(sesion.codigo).set(obj); } catch(e) {}
 }
@@ -786,7 +557,7 @@ async function mostrarPanelMotorizado() {
   const expira = new Date(sesion.expira);
   document.getElementById('sesionInfo').textContent = `Sesión hasta ${expira.getHours()}:${String(expira.getMinutes()).padStart(2,'0')}`;
   mostrarPaso('pasoMotorizado');
-  await sincronizarEstadoLogin();
+  await sincronizarEstado();
 
   const pendiente = localStorage.getItem('pendienteInicio_' + sesion.codigo);
   if (pendiente) {
@@ -818,13 +589,13 @@ function actualizarBotonesPanel() {
 
     if (novedadActiva.teniaRuta) {
       botonesDiv.innerHTML = `
-        <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:10px">✅ Se resolvió — Continuar cobertura</button>
-        <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No se resolvió — Finalizar</button>
+        <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:10px">Se resolvió — Continuar cobertura</button>
+        <button class="btn btn-red" onclick="irFinSinCobertura()">No se resolvió — Finalizar</button>
       `;
     } else {
       botonesDiv.innerHTML = `
-        <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:10px">✅ Se resolvió — Iniciar cobertura</button>
-        <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No se resolvió — Finalizar sin cobertura</button>
+        <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:10px">Se resolvió — Iniciar cobertura</button>
+        <button class="btn btn-red" onclick="irFinSinCobertura()">No se resolvió — Finalizar sin cobertura</button>
       `;
     }
   } else if (rutaActiva) {
@@ -832,18 +603,18 @@ function actualizarBotonesPanel() {
     badge.style.background = '#2d6a4f';
     banner.style.display = 'none';
     botonesDiv.innerHTML = `
-      <button class="btn btn-blue" onclick="irEnviarSeguimiento()" style="margin-top:10px">📋 Enviar seguimiento</button>
-      <button class="btn btn-purple" onclick="irNovedadConRuta()">⚠️ No puedo continuar cobertura</button>
-      <button class="btn btn-orange" onclick="irFinalizarCobertura()">🏁 Finalizar cobertura</button>
-      ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cambiarTabAdmin(\'general\')" style="margin-top:8px">🛠️ Panel administrador</button>' : ''}
+      <button class="btn btn-blue" onclick="irEnviarSeguimiento()" style="margin-top:10px">Enviar seguimiento</button>
+      <button class="btn btn-purple" onclick="irNovedadConRuta()">No puedo continuar cobertura</button>
+      <button class="btn btn-orange" onclick="irFinalizarCobertura()">Finalizar cobertura</button>
+      ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cambiarTabAdmin(\'general\')" style="margin-top:8px">Panel administrador</button>' : ''}
     `;
   } else {
     badge.textContent = 'Sin ruta activa';
     badge.style.background = '#6d1f2a';
     banner.style.display = 'none';
     botonesDiv.innerHTML = `
-      <button class="btn btn-green" onclick="irSeleccionarPlaca()" style="margin-top:10px">🏍️ Iniciar cobertura</button>
-      ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cambiarTabAdmin(\'general\')" style="margin-top:8px">🛠️ Panel administrador</button>' : ''}
+      <button class="btn btn-green" onclick="irSeleccionarPlaca()" style="margin-top:10px">Iniciar cobertura</button>
+      ${sesion.esAdmin ? '<button class="btn btn-blue" onclick="mostrarPaso(\'pasoAdmin\');cambiarTabAdmin(\'general\')" style="margin-top:8px">Panel administrador</button>' : ''}
     `;
   }
 }
@@ -924,7 +695,7 @@ async function confirmarFinalizarIncidente() {
       mostrarMsg('finIncMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
     }
   }
-  btn.disabled = false; btn.textContent = '✅ Confirmar — incidente resuelto';
+  btn.disabled = false; btn.textContent = 'Confirmar — incidente resuelto';
 }
 
 function irSeleccionarPlaca() {
@@ -1135,7 +906,7 @@ async function enviarInicioRuta() {
       mostrarMsg('inicioMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
     }
   }
-  btn.disabled = false; btn.textContent = '✅ Confirmar inicio';
+  btn.disabled = false; btn.textContent = 'Confirmar inicio';
 }
 
 async function enviarSeguimiento() {
@@ -1160,7 +931,7 @@ async function enviarSeguimiento() {
   } catch(e) {
     mostrarMsg('segMsg', 'Error de conexión. Si el problema persiste, tocá enviar de nuevo — no hay riesgo de duplicar el seguimiento.', 'err');
   }
-  btn.disabled = false; btn.textContent = '📋 Enviar seguimiento';
+  btn.disabled = false; btn.textContent = 'Enviar seguimiento';
 }
 
 async function enviarFin() {
@@ -1214,7 +985,7 @@ async function enviarFin() {
       mostrarMsg('finMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
     }
   }
-  btn.disabled = false; btn.textContent = '🏁 Finalizar cobertura';
+  btn.disabled = false; btn.textContent = 'Finalizar cobertura';
 }
 
 async function enviarNovedad() {
@@ -1262,7 +1033,7 @@ async function enviarNovedad() {
       mostrarMsg('novMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
     }
   }
-  btn.disabled = false; btn.textContent = '📨 Enviar reporte';
+  btn.disabled = false; btn.textContent = 'Enviar reporte';
 }
 
 function mostrarPostNovedad(tipo, placa, hora, teniaRuta, descripcion) {
@@ -1272,13 +1043,13 @@ function mostrarPostNovedad(tipo, placa, hora, teniaRuta, descripcion) {
     `<strong>${tipo}</strong> reportada a las ${hora}<br>Unidad afectada: <strong>${placa}</strong>`;
   if (teniaRuta) {
     document.getElementById('opcionesPostNovedad').innerHTML = `
-      <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:8px">✅ Se resolvió — Continuar cobertura</button>
-      <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No se resolvió — Finalizar</button>
+      <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:8px">Se resolvió — Continuar cobertura</button>
+      <button class="btn btn-red" onclick="irFinSinCobertura()">No se resolvió — Finalizar</button>
     `;
   } else {
     document.getElementById('opcionesPostNovedad').innerHTML = `
-      <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:8px">✅ Se resolvió — Iniciar cobertura</button>
-      <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No se resolvió — Finalizar sin cobertura</button>
+      <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:8px">Se resolvió — Iniciar cobertura</button>
+      <button class="btn btn-red" onclick="irFinSinCobertura()">No se resolvió — Finalizar sin cobertura</button>
     `;
   }
   mostrarPaso('pasoPostNovedad');
@@ -1339,230 +1110,53 @@ async function enviarFinSinCobertura() {
       mostrarMsg('finSinMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
     }
   }
-  btn.disabled = false; btn.textContent = '🚫 Confirmar sin cobertura';
+  btn.disabled = false; btn.textContent = 'Confirmar sin cobertura';
 }
 
 function cambiarTabAdmin(tab) {
   const general = document.getElementById('tabAdminGeneral');
   const mapa = document.getElementById('tabAdminMapa');
-  const admins = document.getElementById('tabAdminAdmins');
   const btnG = document.getElementById('tabGeneralBtn');
   const btnM = document.getElementById('tabMapaBtn');
-  const btnA = document.getElementById('tabAdminsBtn');
-  const esSuper = !!(sesion && sesion.esSuper && sesion.token);
-  btnA.style.display = esSuper ? 'block' : 'none';
-  document.getElementById('tabsAdminBox').className = esSuper ? 'grid3' : 'grid2';
-  if (tab === 'admins' && !esSuper) tab = 'general';
-  general.style.display = tab === 'general' ? 'block' : 'none';
-  mapa.style.display = tab === 'mapa' ? 'block' : 'none';
-  admins.style.display = tab === 'admins' ? 'block' : 'none';
-  btnG.className = 'btn ' + (tab === 'general' ? 'btn-blue' : 'btn-gray');
-  btnM.className = 'btn ' + (tab === 'mapa' ? 'btn-blue' : 'btn-gray');
-  btnA.className = 'btn ' + (tab === 'admins' ? 'btn-blue' : 'btn-gray');
-  if (tab === 'general') cargarPresenciaAdmin();
-  else if (tab === 'mapa') cargarAdmin();
-  else cargarCuentas();
-}
-
-// ---------- Administración de cuentas (solo administrador principal) ----------
-function escH(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-async function llamarAdmin(action, extra) {
-  const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify(Object.assign({action, codigo: sesion.codigo, token: sesion.token}, extra || {}))});
-  const data = await res.json();
-  if (data.sesionInvalida) { sesionAdminVencida(data.error); throw new Error('sesion'); }
-  return data;
-}
-
-const ROL_TXT = { super: 'Administrador principal', admin: 'Administrador', especialista: 'Especialista' };
-window._cuentas = [];
-
-async function cargarCuentas() {
-  const cont = document.getElementById('listaCuentas');
-  cont.innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
-  try {
-    const data = await llamarAdmin('adminListaAdmins');
-    if (!data.success) { cont.innerHTML = `<p style="color:#6d1f2a;font-size:13px">${escH(data.error)}</p>`; return; }
-    window._cuentas = data.admins;
-    cont.innerHTML = data.admins.map(a => `
-      <div class="cuenta-item">
-        <strong>${escH(a.nombre)}</strong> <span style="color:#777;font-size:11px">${escH(a.codigo)}</span>
-        ${a.esYo ? '<span class="etiqueta">vos</span>' : ''}${a.bloqueado ? '<span class="etiqueta rojo">Bloqueado</span>' : ''}${a.activo === false ? '<span class="etiqueta rojo">Desactivada</span>' : ''}${a.pendiente ? '<span class="etiqueta amarillo">Cambio de contraseña pendiente</span>' : ''}<br>
-        <span style="font-size:12px;color:#555">${ROL_TXT[a.rol] || a.rol}${a.rol === 'especialista' ? ' · ' + escH(a.operacion) : ' · todas las operaciones'}</span>
-        <div class="acciones">
-          <button class="btn btn-gray btn-sm" onclick="abrirFormCuenta('${a.codigo}')">✏️ Editar</button>
-          ${a.bloqueado ? `<button class="btn btn-gray btn-sm" onclick="desbloquearCuenta('${a.codigo}')">🔓 Desbloquear</button>` : ''}
-          ${a.puedeVerClave ? `<button class="btn btn-gray btn-sm" onclick="abrirVerClave('${a.codigo}', false)">👁️ Ver contraseña</button>` : ''}
-          ${a.pendiente ? `<button class="btn btn-gray btn-sm" onclick="abrirVerClave('${a.codigo}', true)">👁️ Ver la nueva</button>
-            <button class="btn btn-green btn-sm" onclick="resolverCambio('${a.codigo}', true)">✅ Aprobar</button>
-            <button class="btn btn-gray btn-sm" onclick="resolverCambio('${a.codigo}', false)">❌ Rechazar</button>` : ''}
-          ${a.rol !== 'super' ? `<button class="btn btn-gray btn-sm" onclick="eliminarCuenta('${a.codigo}')">🗑️ Eliminar</button>` : ''}
-        </div>
-      </div>`).join('') || '<p style="font-size:13px;color:#777">No hay cuentas.</p>';
-  } catch(e) { if (e.message !== 'sesion') cont.innerHTML = '<p style="color:#6d1f2a;font-size:13px">Error de conexión.</p>'; }
-}
-
-function actualizarFormCuenta() {
-  const esp = document.getElementById('fcRol').value === 'especialista';
-  const objetivo = document.getElementById('fcObjetivo').value;
-  const cuenta = window._cuentas.find(a => a.codigo === objetivo);
-  const esSuperCuenta = !!cuenta && cuenta.rol === 'super';
-  document.getElementById('fcRolBox').style.display = esSuperCuenta ? 'none' : 'block';
-  document.getElementById('fcOpBox').style.display = (esp && !esSuperCuenta) ? 'block' : 'none';
-  document.getElementById('fcActualBox').style.display = (esSuperCuenta && document.getElementById('fcClave').value) ? 'block' : 'none';
-}
-
-function abrirFormCuenta(codigo) {
-  const c = window._cuentas.find(a => a.codigo === codigo);
-  document.getElementById('fcObjetivo').value = c ? c.codigo : '';
-  document.getElementById('formCuentaTitulo').textContent = c ? 'Editar cuenta' : 'Nueva cuenta';
-  document.getElementById('fcCodigo').value = c ? c.codigo : '';
-  document.getElementById('fcNombre').value = c ? c.nombre : '';
-  document.getElementById('fcRol').value = c && c.rol === 'admin' ? 'admin' : 'especialista';
-  document.getElementById('fcOperacion').value = c && c.rol === 'especialista' ? c.operacion : '';
-  document.getElementById('fcClave').value = '';
-  document.getElementById('fcClaveActual').value = '';
-  document.getElementById('fcClaveLabel').textContent = c ? 'Contraseña nueva (dejala vacía para no cambiarla)' : 'Contraseña (mínimo 8 caracteres)';
-  document.getElementById('fcClave').type = (c && c.rol === 'super') ? 'password' : 'text';
-  document.getElementById('fcClave').oninput = actualizarFormCuenta;
-  document.getElementById('msgFormCuenta').style.display = 'none';
-  actualizarFormCuenta();
-  document.getElementById('formCuenta').style.display = 'block';
-  document.getElementById('formCuenta').scrollIntoView({behavior:'smooth'});
-}
-function cerrarFormCuenta() { document.getElementById('formCuenta').style.display = 'none'; document.getElementById('fcClave').value = ''; document.getElementById('fcClaveActual').value = ''; }
-
-async function guardarCuenta() {
-  const objetivo = document.getElementById('fcObjetivo').value;
-  const cuenta = window._cuentas.find(a => a.codigo === objetivo);
-  const cuerpo = {
-    codigoObjetivo: objetivo,
-    codigo: document.getElementById('fcCodigo').value.trim().toUpperCase(),
-    nombre: document.getElementById('fcNombre').value.trim(),
-    rol: document.getElementById('fcRol').value,
-    operacion: document.getElementById('fcOperacion').value.trim().toUpperCase(),
-    clave: document.getElementById('fcClave').value,
-    claveActual: document.getElementById('fcClaveActual').value
-  };
-  mostrarMsg('msgFormCuenta', 'Guardando...', 'wait');
-  try {
-    const data = await llamarAdmin('adminGuardarAdmin', cuerpo);
-    if (!data.success) { mostrarMsg('msgFormCuenta', data.error, 'err'); return; }
-    if (data.nuevoToken) {            // cambiaste TU propio código: la sesión sigue con el código nuevo
-      sesion.codigo = data.nuevoCodigo; sesion.token = data.nuevoToken;
-      localStorage.setItem('sesionGolan', JSON.stringify(sesion));
-    }
-    cerrarFormCuenta();
-    mostrarMsg('msgCuentas', data.mensaje, 'ok');
-    cargarCuentas();
-  } catch(e) { if (e.message !== 'sesion') mostrarMsg('msgFormCuenta', 'Error de conexión.', 'err'); }
-}
-
-async function desbloquearCuenta(codigo) {
-  try {
-    const data = await llamarAdmin('adminDesbloquear', {codigoObjetivo: codigo});
-    mostrarMsg('msgCuentas', data.success ? data.mensaje : data.error, data.success ? 'ok' : 'err');
-    cargarCuentas();
-  } catch(e) { if (e.message !== 'sesion') mostrarMsg('msgCuentas', 'Error de conexión.', 'err'); }
-}
-
-async function eliminarCuenta(codigo) {
-  if (!confirm(`¿Eliminar la cuenta ${codigo}? Ya no va a poder entrar.`)) return;
-  try {
-    const data = await llamarAdmin('adminEliminarAdmin', {codigoObjetivo: codigo});
-    mostrarMsg('msgCuentas', data.success ? data.mensaje : data.error, data.success ? 'ok' : 'err');
-    cargarCuentas();
-  } catch(e) { if (e.message !== 'sesion') mostrarMsg('msgCuentas', 'Error de conexión.', 'err'); }
-}
-
-async function resolverCambio(codigo, aprobar) {
-  if (!confirm(aprobar ? `¿Aprobar la contraseña nueva de ${codigo}?` : `¿Rechazar la solicitud de ${codigo}?`)) return;
-  try {
-    const data = await llamarAdmin('adminResolverCambio', {codigoObjetivo: codigo, aprobar});
-    mostrarMsg('msgCuentas', data.success ? data.mensaje : data.error, data.success ? 'ok' : 'err');
-    cargarCuentas();
-  } catch(e) { if (e.message !== 'sesion') mostrarMsg('msgCuentas', 'Error de conexión.', 'err'); }
-}
-
-let _verClaveObjetivo = null, _verClavePendiente = false, _verClaveTimer = null;
-function abrirVerClave(codigo, pendiente) {
-  _verClaveObjetivo = codigo; _verClavePendiente = pendiente;
-  document.getElementById('verClaveTitulo').textContent = (pendiente ? 'Contraseña nueva de ' : 'Contraseña de ') + codigo;
-  document.getElementById('verClaveSuper').value = '';
-  document.getElementById('verClaveResultado').textContent = '';
-  document.getElementById('msgVerClave').style.display = 'none';
-  document.getElementById('cajaVerClave').style.display = 'block';
-  document.getElementById('cajaVerClave').scrollIntoView({behavior:'smooth'});
-}
-function cerrarVerClave() {
-  if (_verClaveTimer) clearTimeout(_verClaveTimer);
-  document.getElementById('verClaveResultado').textContent = '';
-  document.getElementById('verClaveSuper').value = '';
-  document.getElementById('cajaVerClave').style.display = 'none';
-}
-async function confirmarVerClave() {
-  const claveSuper = document.getElementById('verClaveSuper').value;
-  if (!claveSuper) { mostrarMsg('msgVerClave', 'Escribí tu contraseña.', 'err'); return; }
-  try {
-    const data = await llamarAdmin('adminVerClave', {codigoObjetivo: _verClaveObjetivo, claveSuper, pendiente: _verClavePendiente});
-    document.getElementById('verClaveSuper').value = '';
-    if (!data.success) { mostrarMsg('msgVerClave', data.error, 'err'); return; }
-    document.getElementById('msgVerClave').style.display = 'none';
-    document.getElementById('verClaveResultado').textContent = data.clave;
-    if (_verClaveTimer) clearTimeout(_verClaveTimer);
-    _verClaveTimer = setTimeout(cerrarVerClave, 20000);   // se oculta sola a los 20 segundos
-  } catch(e) { if (e.message !== 'sesion') mostrarMsg('msgVerClave', 'Error de conexión.', 'err'); }
-}
-
-async function cambiarMiClave() {
-  const actual = document.getElementById('mcActual').value;
-  const nueva = document.getElementById('mcNueva').value;
-  const nueva2 = document.getElementById('mcNueva2').value;
-  if (!actual || !nueva) { mostrarMsg('msgMiClave', 'Completá todos los campos.', 'err'); return; }
-  if (nueva !== nueva2) { mostrarMsg('msgMiClave', 'La contraseña nueva no coincide en los dos campos.', 'err'); return; }
-  mostrarMsg('msgMiClave', 'Enviando...', 'wait');
-  try {
-    const data = await llamarAdmin('cambiarMiClave', {claveActual: actual, claveNueva: nueva});
-    if (!data.success) { mostrarMsg('msgMiClave', data.error, 'err'); return; }
-    ['mcActual','mcNueva','mcNueva2'].forEach(i => document.getElementById(i).value = '');
-    mostrarMsg('msgMiClave', data.mensaje, 'ok');
-  } catch(e) { if (e.message !== 'sesion') mostrarMsg('msgMiClave', 'Error de conexión.', 'err'); }
+  if (tab === 'general') {
+    general.style.display = 'block'; mapa.style.display = 'none';
+    btnG.className = 'btn btn-blue'; btnM.className = 'btn btn-gray';
+    cargarPresenciaAdmin();
+  } else {
+    general.style.display = 'none'; mapa.style.display = 'block';
+    btnG.className = 'btn btn-gray'; btnM.className = 'btn btn-blue';
+    cargarAdmin();
+  }
 }
 
 async function cargarPresenciaAdmin() {
   const cont = document.getElementById('listaPresencia');
   cont.innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
   try {
-    const listaRes = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminListaCodigos', codigo: sesion.codigo, token: sesion.token})}).then(r=>r.json());
-    if (listaRes.sesionInvalida) { sesionAdminVencida(listaRes.error); return; }
-    if (!listaRes.success) throw new Error(listaRes.error || 'Sin lista de códigos');
-
-    // La presencia se guarda un documento por código; se lee uno por uno (sin listar la colección)
-    const presDocs = await Promise.all(listaRes.data.map(m =>
-      db.collection('presenciaDispositivos').doc(m.codigo).get().catch(() => null)
-    ));
+    const [presSnap, listaRes] = await Promise.all([
+      db.collection('presenciaDispositivos').get(),
+      fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminListaCodigos', codigo: sesion.codigo})}).then(r=>r.json())
+    ]);
 
     const ahora = Date.now();
     const porCodigo = {};
-    presDocs.forEach((doc, i) => {
-      if (!doc || !doc.exists) return;
+    presSnap.forEach(doc => {
       const d = doc.data();
-      const codigo = listaRes.data[i].codigo;
       const ms = d.ultimaActividad?.toMillis ? d.ultimaActividad.toMillis() : 0;
-      porCodigo[codigo] = { codigo: codigo, nombre: d.nombre || listaRes.data[i].nombre, ms };
+      if (!porCodigo[d.codigo] || ms > porCodigo[d.codigo].ms) {
+        porCodigo[d.codigo] = { codigo: d.codigo, nombre: d.nombre, ms };
+      }
     });
 
     const infoMap = {};
-    listaRes.data.forEach(m => { infoMap[m.codigo] = m; });
+    if (listaRes.success) listaRes.data.forEach(m => { infoMap[m.codigo] = m; });
 
     let lista = Object.values(porCodigo).map(p => {
       const minutos = Math.floor((ahora - p.ms) / 60000);
       return {
         codigo: p.codigo, nombre: p.nombre, minutos,
         activo: infoMap[p.codigo]?.activo ?? 'Sí',
-        puedeGestionar: infoMap[p.codigo]?.puedeGestionar ?? false,
-        esCuentaAdmin: !!infoMap[p.codigo]?.esCuentaAdmin,
-        rol: infoMap[p.codigo]?.rol || ''
+        puedeGestionar: infoMap[p.codigo]?.puedeGestionar ?? false
       };
     });
 
@@ -1577,14 +1171,14 @@ async function cargarPresenciaAdmin() {
         <div class="presencia-item">
           <div class="presencia-top">
             <div>
-              <strong>${escH(p.nombre)}</strong> ${sesion.verCodigos ? `<span style="color:#777;font-size:11px">${escH(p.codigo)}</span>` : ''}${p.esCuentaAdmin ? `<span class="etiqueta">${escH(ROL_TXT[p.rol] || 'Administrador')}</span>` : ''}<br>
+              <strong>${p.nombre}</strong> <span style="color:#777;font-size:11px">${p.codigo}</span><br>
               <span style="font-size:12px;color:${estadoColor}">${estadoTxt}</span>
               ${p.activo === 'No' ? '<span style="color:#6d1f2a;font-size:11px;margin-left:6px">(Desactivado)</span>' : ''}
             </div>
             ${p.puedeGestionar ? `
             <div class="presencia-acciones">
-              <button class="btn btn-gray btn-sm" onclick="toggleActivoCodigo('${p.codigo}','${p.activo==='No'?'Sí':'No'}',${p.esCuentaAdmin})">${p.activo==='No'?'Activar':'Desactivar'}</button>
-              <button class="btn btn-gray btn-sm" onclick="forzarCierreSesion('${p.codigo}')">🚪 Cerrar sesión</button>
+              <button class="btn btn-gray btn-sm" onclick="toggleActivoCodigo('${p.codigo}','${p.activo==='No'?'Sí':'No'}')">${p.activo==='No'?'Activar':'Desactivar'}</button>
+              <button class="btn btn-gray btn-sm" onclick="forzarCierreSesion('${p.codigo}')">Cerrar sesión</button>
             </div>` : ''}
           </div>
         </div>`;
@@ -1594,21 +1188,15 @@ async function cargarPresenciaAdmin() {
   }
 }
 
-async function toggleActivoCodigo(codigoObjetivo, nuevoEstado, esCuentaAdmin) {
-  if (!confirm(`¿${nuevoEstado === 'No' ? 'Desactivar' : 'Activar'} el código ${codigoObjetivo}?` +
-      (esCuentaAdmin && nuevoEstado === 'No' ? ' Su sesión se cerrará y no podrá entrar hasta que lo actives otra vez.' : ''))) return;
+async function toggleActivoCodigo(codigoObjetivo, nuevoEstado) {
+  if (!confirm(`¿${nuevoEstado === 'No' ? 'Desactivar' : 'Activar'} el código ${codigoObjetivo}?`)) return;
   try {
     const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
-      action: 'adminCambiarEstado', codigo: sesion.codigo, token: sesion.token,
+      action: 'adminCambiarEstado', codigo: sesion.codigo,
       codigoObjetivo: codigoObjetivo, nuevoEstado: nuevoEstado
     })});
     const data = await res.json();
-    if (data.success) {
-      // al desactivar una cuenta de administrador, también se le cierra la sesión que tenga abierta
-      if (esCuentaAdmin && nuevoEstado === 'No') { try { await db.collection('comandos').doc(codigoObjetivo).set({ cerrarSesion: true, hora: Date.now() }); } catch(e) {} }
-      cargarPresenciaAdmin();
-    }
-    else if (data.sesionInvalida) { sesionAdminVencida(data.error); }
+    if (data.success) { cargarPresenciaAdmin(); }
     else { alert(data.error); }
   } catch(e) { alert('Error de conexión.'); }
 }
@@ -1623,15 +1211,14 @@ async function forzarCierreSesion(codigoObjetivo) {
 async function cargarReportes() {
   document.getElementById('listaReportes').innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
   try {
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminReportes', codigo: sesion.codigo, token: sesion.token})});
+    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminReportes', codigo: sesion.codigo})});
     const data = await res.json();
-    if (data.sesionInvalida) { sesionAdminVencida(data.error); return; }
     if (!data.success) { document.getElementById('listaReportes').innerHTML = `<p style="color:#6d1f2a;font-size:13px">${data.error}</p>`; return; }
     if (!data.reportes.length) { document.getElementById('listaReportes').innerHTML = '<p style="font-size:13px;color:#777">Sin reportes hoy.</p>'; return; }
     document.getElementById('listaReportes').innerHTML = data.reportes.map(r => `
       <div class="reporte-card">
         <div class="reporte-tipo">${r.tipoNovedad} — <span style="color:${r.estado==='Activa'?'#6d1f2a':'#2d6a4f'}">${r.estado}</span></div>
-        <div class="reporte-info">${r.nombre}${sesion.verCodigos && r.codigo ? ` (${r.codigo})` : ''} — ${r.hora}</div>
+        <div class="reporte-info">${r.nombre} (${r.codigo}) — ${r.hora}</div>
         <div class="reporte-info">Unidad: <strong>${r.placaUnidad}</strong></div>
         ${r.descripcion?`<div class="reporte-info">${r.descripcion}</div>`:''}
         ${r.horaRetoma?`<div class="reporte-info">Retomó: ${r.horaRetoma} | Sin cobertura: ${r.tiempoSin}</div>`:''}
@@ -1643,15 +1230,14 @@ async function cargarReportes() {
 async function cargarAdmin() {
   document.getElementById('listaMotorizados').innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
   try {
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminMotorizados', codigo: sesion.codigo, token: sesion.token})});
+    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'adminMotorizados', codigo: sesion.codigo})});
     const data = await res.json();
-    if (data.sesionInvalida) { sesionAdminVencida(data.error); return; }
     if (!data.success) { document.getElementById('listaMotorizados').innerHTML = `<p style="color:#6d1f2a;font-size:13px">${data.error}</p>`; return; }
     if (!data.motorizados.length) { document.getElementById('listaMotorizados').innerHTML = '<p style="font-size:13px;color:#777">Ningún motorizado activo hoy.</p>'; return; }
     document.getElementById('listaMotorizados').innerHTML = data.motorizados.map(m => `
       <div class="mot-card" onclick="verDetalle('${m.codigo}')">
         <div class="mot-nombre">${m.nombre}</div>
-        <div class="mot-info">${sesion.verCodigos ? `Código: ${m.codigo} | ` : ''}Moto: ${m.placaMoto}</div>
+        <div class="mot-info">Código: ${m.codigo} | Moto: ${m.placaMoto}</div>
         <div class="mot-info">${m.puntos.length} registros — Último: ${m.puntos[m.puntos.length-1]?.tipo} a las ${m.puntos[m.puntos.length-1]?.hora}</div>
       </div>`).join('');
     window._adminData = data.motorizados;
@@ -1751,18 +1337,18 @@ async function cargarMapaGeneral() {
 
 function capturarGPS(key, txtId) {
   const btn = event.target;
-  btn.disabled = true; btn.textContent = '📡 Capturando...';
+  btn.disabled = true; btn.textContent = 'Capturando...';
   navigator.geolocation.getCurrentPosition(
     pos => {
       gpsData[key] = {lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6)};
       document.getElementById(txtId).textContent = `${gpsData[key].lat}, ${gpsData[key].lng}`;
       document.getElementById(txtId).style.color = '#2d6a4f';
-      btn.textContent = '✅ Ubicación capturada'; btn.disabled = false;
+      btn.textContent = 'Ubicación capturada'; btn.disabled = false;
     },
     () => {
       document.getElementById(txtId).textContent = 'No se pudo obtener ubicación';
       document.getElementById(txtId).style.color = '#6d1f2a';
-      btn.textContent = '🔄 Reintentar'; btn.disabled = false;
+      btn.textContent = 'Reintentar'; btn.disabled = false;
     },
     {enableHighAccuracy:true, timeout:10000}
   );
@@ -1811,30 +1397,11 @@ function cerrarSesion() {
     localStorage.removeItem('placaActiva_' + sesion?.codigo);
     localStorage.removeItem('novedad_' + sesion?.codigo);
     localStorage.removeItem('pendienteInicio_' + sesion?.codigo);
-    try { cerrarVerClave(); } catch(e) {}
-    ['mcActual','mcNueva','mcNueva2'].forEach(i => { const el = document.getElementById(i); if (el) el.value = ''; });
     sesion = null;
-    document.getElementById('loginClave').value = '';
-    document.getElementById('loginClaveBox').style.display = 'none';
     mostrarPaso('pasoLogin');
     document.getElementById('sesionInfo').textContent = '';
     ocultarFab();
   }
-}
-
-function sesionAdminVencida(msg) {
-  try { cerrarVerClave(); } catch(e) {}
-  ['mcActual','mcNueva','mcNueva2'].forEach(i => { const el = document.getElementById(i); if (el) el.value = ''; });
-  if (window._heartbeatInterval) clearInterval(window._heartbeatInterval);
-  if (window._comandosUnsub) window._comandosUnsub();
-  localStorage.removeItem('sesionGolan');
-  sesion = null;
-  document.getElementById('loginClave').value = '';
-  document.getElementById('loginClaveBox').style.display = 'none';
-  mostrarPaso('pasoLogin');
-  document.getElementById('sesionInfo').textContent = '';
-  ocultarFab();
-  mostrarMsg('loginMsg', msg || 'Tu sesión venció. Ingresá de nuevo.', 'err');
 }
 
 function verificarSesionGuardada() {
@@ -1843,8 +1410,6 @@ function verificarSesionGuardada() {
     const s = JSON.parse(guardada);
     if (Date.now() < s.expira) {
       sesion = s;
-      if (sesion.esAdmin && sesion.esSuper === undefined) sesion.esSuper = true; // sesión guardada antes de este cambio
-      if (sesion.esAdmin && sesion.verCodigos === undefined) sesion.verCodigos = sesion.esSuper !== false;
       iniciarPresencia();
       escucharComandos();
       mostrarFab();
@@ -1855,7 +1420,6 @@ function verificarSesionGuardada() {
 }
 
 verificarSesionGuardada();
-iniciarMonitorConexion();
 </script>
 </body>
 </html>
