@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prueba de carga – Control de Coberturas</title>
+<style>
+body{font-family:system-ui,Arial,sans-serif;max-width:900px;margin:0 auto;padding:16px;background:#f4f6f8;color:#222}
+h1{font-size:20px} .caja{background:#fff;border-radius:10px;padding:14px;margin:12px 0;box-shadow:0 1px 3px #0002}
+label{display:block;margin:8px 0 3px;font-weight:600;font-size:14px}
+input,select{width:100%;padding:9px;font-size:15px;border:1px solid #bbb;border-radius:6px;box-sizing:border-box}
+button{padding:12px 18px;font-size:16px;border:0;border-radius:8px;background:#c62828;color:#fff;font-weight:700;cursor:pointer;margin:6px 6px 0 0}
+button:disabled{background:#999}
+.aviso{background:#fff3cd;border:1px solid #ffe08a;padding:10px;border-radius:8px;font-size:14px}
+table{border-collapse:collapse;width:100%;font-size:13px} td,th{border-bottom:1px solid #ddd;padding:5px;text-align:left}
+.ok{color:#1b7f2a;font-weight:700}.mal{color:#c62828;font-weight:700}
+#resumen{white-space:pre-wrap;font-size:15px;line-height:1.5}
+.fila{display:flex;gap:10px}.fila>div{flex:1}
+</style></head><body>
+<h1>Prueba de carga (usar SOLO con la COPIA del Excel)</h1>
+<div class="aviso"><b>Cuidado:</b> esto escribe filas y fotos falsas. Pegá aquí la dirección de la <b>copia</b>, nunca la del sistema real.</div>
+
+<div class="caja">
+<label>Dirección /exec de la COPIA (Apps Script de la copia)</label>
+<input id="url" placeholder="https://script.google.com/macros/s/.../exec">
+<div class="fila">
+<div><label>Cuántos motorizados falsos</label><input id="n" type="number" value="10" min="1" max="300"></div>
+<div><label>Forma de entrar</label>
+<select id="modo"><option value="todos">Todos EXACTAMENTE al mismo tiempo</option><option value="rampa">Escalonados (uno cada 300 ms)</option></select></div>
+</div>
+<div class="fila">
+<div><label>Prefijo del código falso</label><input id="pref" value="TEST"></div>
+<div><label>Peso aproximado de la foto (KB)</label><input id="kb" type="number" value="90" min="20" max="400"></div>
+</div>
+<button id="b1" onclick="correr('iniciar')">1) Iniciar cobertura (todos)</button>
+<button id="b2" onclick="correr('seguimiento')">2) Enviar seguimiento (todos)</button>
+<button id="b3" onclick="correr('finalizar')">3) Finalizar (todos)</button>
+<button id="b4" onclick="correr('completo')" style="background:#1565c0">▶ Prueba completa 1+2+3</button>
+</div>
+
+<div class="caja"><b>Resumen</b><div id="resumen">Todavía no se ha corrido nada.</div></div>
+<div class="caja"><b>Detalle</b><div style="overflow:auto"><table id="tabla"><thead><tr><th>#</th><th>Código</th><th>Paso</th><th>Resultado</th><th>Seg.</th><th>Mensaje</th></tr></thead><tbody></tbody></table></div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+function fotoFalsa(kb){
+  // genera un JPEG de ruido de ~kb KB (parecido al de una foto real a 640px)
+  const c=document.createElement('canvas');c.width=640;c.height=480;
+  const x=c.getContext('2d');const d=x.createImageData(640,480);
+  for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=v;d.data[i+1]=v*0.9;d.data[i+2]=v*0.8;d.data[i+3]=255}
+  x.putImageData(d,0,0);
+  let q=0.5,s;for(let k=0;k<8;k++){s=c.toDataURL('image/jpeg',q);const size=s.length*0.75/1024;if(Math.abs(size-kb)<kb*0.15)break;q=Math.max(0.05,Math.min(0.95,q*(kb/size)))}
+  return s;
+}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+let todos=[];
+function cuenta(i){const p=$('pref').value||'TEST';return {cod:p+String(i+1).padStart(3,'0'),placa:'TP'+String(i+1).padStart(4,'0')}}
+async function enviar(i,paso,foto){
+  const {cod,placa}=cuenta(i);
+  const base={codigoMotorizado:cod,nombre:'Prueba '+cod,placaMoto:'M'+cod,placa:placa,latitud:14.6349+(i%50)*0.0005,longitud:-90.5069+(i%50)*0.0005,foto:foto};
+  let body;
+  if(paso==='iniciar')body={action:'iniciarRuta',...base};
+  if(paso==='seguimiento')body={action:'seguimiento',...base};
+  if(paso==='finalizar')body={action:'finalizarRuta',...base,rondasRealizadas:'1',motivoNoRonda:'',observaciones:'prueba de carga'};
+  const t0=performance.now();let ok=false,msg='';
+  try{
+    const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),120000);
+    const r=await fetch($('url').value.trim(),{method:'POST',body:JSON.stringify(body),signal:ctrl.signal});clearTimeout(to);
+    const j=await r.json();ok=!!j.success;msg=j.success?(j.mensaje||'ok'):(j.error||'error');
+  }catch(e){msg='SIN RESPUESTA: '+e.message}
+  const seg=((performance.now()-t0)/1000);
+  return {i,cod,paso,ok,seg,msg};
+}
+async function ronda(paso){
+  const n=+$('n').value, foto=fotoFalsa(+$('kb').value), modo=$('modo').value;
+  const t0=performance.now();const ps=[];
+  for(let i=0;i<n;i++){ps.push(enviar(i,paso,foto));if(modo==='rampa')await wait(300)}
+  const res=await Promise.all(ps);
+  const total=(performance.now()-t0)/1000;
+  res.forEach(r=>{todos.push(r);const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${r.i+1}</td><td>${r.cod}</td><td>${r.paso}</td><td class="${r.ok?'ok':'mal'}">${r.ok?'OK':'FALLÓ'}</td><td>${r.seg.toFixed(1)}</td><td></td>`;
+    tr.lastChild.textContent=r.msg;$('tabla').tBodies[0].appendChild(tr)});
+  const oks=res.filter(r=>r.ok).length, t=res.map(r=>r.seg).sort((a,b)=>a-b);
+  const p=q=>t[Math.min(t.length-1,Math.floor(q*t.length))].toFixed(1);
+  const fallas={};res.filter(r=>!r.ok).forEach(r=>{fallas[r.msg]=(fallas[r.msg]||0)+1});
+  let txt=`${paso.toUpperCase()}: ${oks} de ${n} entraron bien (${n-oks} fallaron)\n`+
+   `Tiempo total de la tanda: ${total.toFixed(1)} s · el más rápido ${t[0].toFixed(1)} s · mediana ${p(0.5)} s · el más lento ${t[t.length-1].toFixed(1)} s\n`;
+  const f=Object.entries(fallas);if(f.length)txt+='Motivos de falla:\n'+f.map(([m,c])=>`  • ${c} × ${m}`).join('\n')+'\n';
+  $('resumen').textContent=($('resumen').dataset.k==='1'?$('resumen').textContent+'\n':'')+txt;$('resumen').dataset.k='1';
+}
+async function correr(que){
+  if(!$('url').value.trim()){alert('Pegá primero la dirección /exec de la COPIA');return}
+  if(!confirm('¿Seguro que es la dirección de la COPIA y no la del sistema real?'))return;
+  document.querySelectorAll('button').forEach(b=>b.disabled=true);
+  $('resumen').textContent='';$('resumen').dataset.k='0';$('tabla').tBodies[0].innerHTML='';todos=[];
+  try{
+    if(que==='completo'){await ronda('iniciar');await wait(3000);await ronda('seguimiento');await wait(3000);await ronda('finalizar')}
+    else await ronda(que);
+  }finally{document.querySelectorAll('button').forEach(b=>b.disabled=false)}
+}
+</script></body></html>
