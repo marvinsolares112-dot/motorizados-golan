@@ -450,6 +450,31 @@ a.btn{display:block;text-align:center;text-decoration:none}
 <a href="tel:+50256950128" class="fab-llamar" id="fabLlamar" title="Llamar a Central de Alerta" aria-label="Llamar a Central de Alerta"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"/></svg></a>
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYCl3ZYGpRWbDNST6Di7lCBrHWpoCLjhTzjzYuCEzCeJVbxN94KTtu_duPXont5tWSfA/exec";
+
+// Envía una acción que ESCRIBE (iniciar, seguimiento, finalizar, novedad...).
+// Si el servidor dice "ocupado" (muchos enviando a la vez), reintenta solo con una espera
+// al azar, sin volver a subir la foto, y le avisa al motorizado en el botón.
+async function postAccionRes(obj) {
+  let payload = obj;
+  const MAX = 12;
+  for (let intento = 0; ; intento++) {
+    const res = await fetch(SCRIPT_URL, {method: 'POST', body: JSON.stringify(payload)});
+    const data = await res.json();
+    if (data && data.ocupado && intento < MAX) {
+      if (data.fotoUrl && data.fotoSello) {
+        // Mandamos el sello para NO volver a guardar la foto en Drive, pero la foto viaja
+        // igual: si por lo que sea el sello no sirviera, el servidor la guarda y no falla.
+        payload = Object.assign({}, obj, {fotoUrl: data.fotoUrl, fotoSello: data.fotoSello});
+      }
+      document.querySelectorAll('button:disabled').forEach(b => {
+        if (/^(Enviando|Hay muchos)/.test(b.textContent)) b.textContent = 'Hay muchos enviando… reintentando (' + (intento + 1) + ')';
+      });
+      await new Promise(r => setTimeout(r, 1200 + Math.random() * 2500 + intento * 400));
+      continue;
+    }
+    return {json: async () => data};
+  }
+}
 const SESION_HORAS = 20;
 const MAESTRO = {};
 let sesion = null;
@@ -872,14 +897,14 @@ async function confirmarFinalizarIncidente() {
 
   try {
     const fotoSrc = document.getElementById('finIncFotoPreview').src;
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
+    const res = await postAccionRes(({
       action: 'reanudarRuta',
       codigoMotorizado: sesion.codigo, nombre: sesion.nombre,
       placaMoto: sesion.placaMoto, placaUnidad: novedadActiva?.placa || '',
       teniaRuta: finIncidenteTeniaRuta,
       latitud: gpsData.finIncGps.lat, longitud: gpsData.finIncGps.lng,
       foto: fotoSrc && fotoSrc.startsWith('data:') ? fotoSrc : ''
-    })});
+    }));
     const data = await res.json();
     if (data.success) {
       if (finIncidenteTeniaRuta) {
@@ -1094,13 +1119,13 @@ async function enviarInicioRuta() {
         descripcion: novedadActiva.descripcion || ''
       };
     }
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
+    const res = await postAccionRes(({
       action: 'iniciarRuta', codigoMotorizado: sesion.codigo,
       nombre: sesion.nombre, placaMoto: sesion.placaMoto,
       placa: placaIntentada, latitud: gpsData.inicioGps.lat,
       longitud: gpsData.inicioGps.lng, foto: fotoSrc,
       incidenteInfo: incidenteInfo
-    })});
+    }));
     const data = await res.json();
     if (data.success) {
       localStorage.setItem('rutaActiva_' + sesion.codigo, placaIntentada);
@@ -1147,13 +1172,13 @@ async function enviarSeguimiento() {
   }
   const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
   try {
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
+    const res = await postAccionRes(({
       action: 'seguimiento', codigoMotorizado: sesion.codigo,
       nombre: sesion.nombre, placaMoto: sesion.placaMoto,
       placa: localStorage.getItem('placaActiva_' + sesion.codigo) || '',
       latitud: gpsData.segGps.lat, longitud: gpsData.segGps.lng,
       foto: fotoSrc
-    })});
+    }));
     const data = await res.json();
     mostrarMsg('segMsg', data.success ? data.mensaje : data.error, data.success ? 'ok' : 'err');
     if (data.success) setTimeout(volverPanel, 2000);
@@ -1173,7 +1198,7 @@ async function enviarFin() {
   const btn = event.target; btn.disabled = true; btn.textContent = 'Finalizando...';
   try {
     const fotoSrc = document.getElementById('finFotoPreview').src;
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
+    const res = await postAccionRes(({
       action: 'finalizarRuta', codigoMotorizado: sesion.codigo,
       nombre: sesion.nombre, placaMoto: sesion.placaMoto,
       placa: localStorage.getItem('placaActiva_' + sesion.codigo) || '',
@@ -1182,7 +1207,7 @@ async function enviarFin() {
       rondasRealizadas: document.getElementById('finRondas').value,
       motivoNoRonda: document.getElementById('finMotivo')?.value || '',
       observaciones: document.getElementById('finObs').value
-    })});
+    }));
     const data = await res.json();
     if (data.success) {
       localStorage.removeItem('rutaActiva_' + sesion.codigo);
@@ -1236,14 +1261,14 @@ async function enviarNovedad() {
     const fotoSrc = document.getElementById('novFotoPreview').src;
     const descripcion = document.getElementById('novedadDesc').value;
     const teniaRuta = !!localStorage.getItem('rutaActiva_' + sesion.codigo);
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
+    const res = await postAccionRes(({
       action: 'reportarNovedad', codigoMotorizado: sesion.codigo,
       nombre: sesion.nombre, placaMoto: sesion.placaMoto,
       placaUnidad: placaIntentada, tipoNovedad: tipo,
       descripcion: descripcion,
       latitud: gpsData.novGps.lat, longitud: gpsData.novGps.lng,
       foto: fotoSrc
-    })});
+    }));
     const data = await res.json();
     if (data.success) {
       guardarEstadoFirebase({ estado: 'novedad', placa: placaIntentada, tipo, hora: data.hora, teniaRuta });
@@ -1294,7 +1319,7 @@ async function enviarFinSinCobertura() {
   const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
   try {
     const fotoSrc = document.getElementById('finSinFotoPreview').src;
-    const res = await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({
+    const res = await postAccionRes(({
       action: 'finalizarSinCobertura', codigoMotorizado: sesion.codigo,
       nombre: sesion.nombre, placaMoto: sesion.placaMoto,
       placaUnidad: novedadActiva?.placa || '',
@@ -1304,7 +1329,7 @@ async function enviarFinSinCobertura() {
       latitud: gpsData.finSinGps.lat, longitud: gpsData.finSinGps.lng,
       foto: fotoSrc,
       observaciones: document.getElementById('finSinObs').value
-    })});
+    }));
     const data = await res.json();
     if (data.success) {
       localStorage.removeItem('novedad_' + sesion.codigo);
