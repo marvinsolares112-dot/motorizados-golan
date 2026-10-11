@@ -70,7 +70,7 @@ async function enviar(i,paso,foto){
       const j=await r.json();
       if(j.ocupado&&$('reint').checked&&reint<12){
         reint++;
-        if(j.fotoUrl&&j.fotoSello)payload={...body,foto:'',fotoUrl:j.fotoUrl,fotoSello:j.fotoSello};
+        if(j.fotoUrl&&j.fotoSello)payload={...body,fotoUrl:j.fotoUrl,fotoSello:j.fotoSello};
         await wait(2000+Math.random()*4000+reint*500);continue;
       }
       ok=!!j.success;msg=j.success?(j.mensaje||'ok'):(j.error||'error');break;
