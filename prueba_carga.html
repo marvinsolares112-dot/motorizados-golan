@@ -30,6 +30,7 @@ table{border-collapse:collapse;width:100%;font-size:13px} td,th{border-bottom:1p
 <div><label>Prefijo del código falso</label><input id="pref" value="TEST"></div>
 <div><label>Peso aproximado de la foto (KB)</label><input id="kb" type="number" value="90" min="20" max="400"></div>
 </div>
+<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input id="reint" type="checkbox" checked style="width:auto"> Reintentar solo si el sistema dice "ocupado" (como hará el app nuevo)</label>
 <button id="b1" onclick="correr('iniciar')">1) Iniciar cobertura (todos)</button>
 <button id="b2" onclick="correr('seguimiento')">2) Enviar seguimiento (todos)</button>
 <button id="b3" onclick="correr('finalizar')">3) Finalizar (todos)</button>
@@ -37,7 +38,7 @@ table{border-collapse:collapse;width:100%;font-size:13px} td,th{border-bottom:1p
 </div>
 
 <div class="caja"><b>Resumen</b><div id="resumen">Todavía no se ha corrido nada.</div></div>
-<div class="caja"><b>Detalle</b><div style="overflow:auto"><table id="tabla"><thead><tr><th>#</th><th>Código</th><th>Paso</th><th>Resultado</th><th>Seg.</th><th>Mensaje</th></tr></thead><tbody></tbody></table></div></div>
+<div class="caja"><b>Detalle</b><div style="overflow:auto"><table id="tabla"><thead><tr><th>#</th><th>Código</th><th>Paso</th><th>Resultado</th><th>Seg.</th><th>Reintentos</th><th>Mensaje</th></tr></thead><tbody></tbody></table></div></div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -60,14 +61,23 @@ async function enviar(i,paso,foto){
   if(paso==='iniciar')body={action:'iniciarRuta',...base};
   if(paso==='seguimiento')body={action:'seguimiento',...base};
   if(paso==='finalizar')body={action:'finalizarRuta',...base,rondasRealizadas:'1',motivoNoRonda:'',observaciones:'prueba de carga'};
-  const t0=performance.now();let ok=false,msg='';
+  const t0=performance.now();let ok=false,msg='',reint=0;
   try{
-    const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),120000);
-    const r=await fetch($('url').value.trim(),{method:'POST',body:JSON.stringify(body),signal:ctrl.signal});clearTimeout(to);
-    const j=await r.json();ok=!!j.success;msg=j.success?(j.mensaje||'ok'):(j.error||'error');
+    let payload=body;
+    for(;;){
+      const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),120000);
+      const r=await fetch($('url').value.trim(),{method:'POST',body:JSON.stringify(payload),signal:ctrl.signal});clearTimeout(to);
+      const j=await r.json();
+      if(j.ocupado&&$('reint').checked&&reint<12){
+        reint++;
+        if(j.fotoUrl&&j.fotoSello)payload={...body,foto:'',fotoUrl:j.fotoUrl,fotoSello:j.fotoSello};
+        await wait(2000+Math.random()*4000+reint*500);continue;
+      }
+      ok=!!j.success;msg=j.success?(j.mensaje||'ok'):(j.error||'error');break;
+    }
   }catch(e){msg='SIN RESPUESTA: '+e.message}
   const seg=((performance.now()-t0)/1000);
-  return {i,cod,paso,ok,seg,msg};
+  return {i,cod,paso,ok,seg,msg,reint};
 }
 async function ronda(paso){
   const n=+$('n').value, foto=fotoFalsa(+$('kb').value), modo=$('modo').value;
@@ -76,12 +86,13 @@ async function ronda(paso){
   const res=await Promise.all(ps);
   const total=(performance.now()-t0)/1000;
   res.forEach(r=>{todos.push(r);const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${r.i+1}</td><td>${r.cod}</td><td>${r.paso}</td><td class="${r.ok?'ok':'mal'}">${r.ok?'OK':'FALLÓ'}</td><td>${r.seg.toFixed(1)}</td><td></td>`;
+    tr.innerHTML=`<td>${r.i+1}</td><td>${r.cod}</td><td>${r.paso}</td><td class="${r.ok?'ok':'mal'}">${r.ok?'OK':'FALLÓ'}</td><td>${r.seg.toFixed(1)}</td><td>${r.reint}</td><td></td>`;
     tr.lastChild.textContent=r.msg;$('tabla').tBodies[0].appendChild(tr)});
   const oks=res.filter(r=>r.ok).length, t=res.map(r=>r.seg).sort((a,b)=>a-b);
   const p=q=>t[Math.min(t.length-1,Math.floor(q*t.length))].toFixed(1);
   const fallas={};res.filter(r=>!r.ok).forEach(r=>{fallas[r.msg]=(fallas[r.msg]||0)+1});
   let txt=`${paso.toUpperCase()}: ${oks} de ${n} entraron bien (${n-oks} fallaron)\n`+
+   `Con reintentos automáticos: ${res.filter(r=>r.reint>0).length} necesitaron reintentar (máx. ${Math.max(...res.map(r=>r.reint))} veces)\n`+
    `Tiempo total de la tanda: ${total.toFixed(1)} s · el más rápido ${t[0].toFixed(1)} s · mediana ${p(0.5)} s · el más lento ${t[t.length-1].toFixed(1)} s\n`;
   const f=Object.entries(fallas);if(f.length)txt+='Motivos de falla:\n'+f.map(([m,c])=>`  • ${c} × ${m}`).join('\n')+'\n';
   $('resumen').textContent=($('resumen').dataset.k==='1'?$('resumen').textContent+'\n':'')+txt;$('resumen').dataset.k='1';
