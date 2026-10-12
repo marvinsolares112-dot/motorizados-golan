@@ -114,6 +114,22 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .falla.tranqui{border-left-color:#1b7f2a;background:#f4faf5}
 .falla.tranqui b{color:#1b7f2a}
 .ayuda-nota{background:#f5efdd;border:1px solid #8a6d1f;border-radius:8px;padding:11px;font-size:12.5px;color:#8a6d1f;line-height:1.5;margin-top:16px}
+.tarea{border:1px solid #e3e3e3;border-radius:10px;margin:9px 0;overflow:hidden}
+.tarea[open]{border-color:#6d1f2a}
+.tarea summary{list-style:none;cursor:pointer;padding:13px 14px;font-size:15px;font-weight:700;color:#6d1f2a;display:flex;align-items:center;gap:10px;background:#faf7f7}
+.tarea summary::-webkit-details-marker{display:none}
+.tarea summary::after{content:'▾';margin-left:auto;font-size:13px;color:#999;transition:transform .15s}
+.tarea[open] summary::after{transform:rotate(180deg)}
+.tarea summary .ico{font-size:20px}
+.tarea-cuerpo{padding:4px 14px 14px}
+.paso-n{display:flex;gap:11px;margin:12px 0}
+.paso-n i{background:#6d1f2a;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;flex-shrink:0;font-style:normal;margin-top:1px}
+.paso-n span{font-size:13.5px;color:#333;line-height:1.6}
+.paso-n span b{color:#111}
+.paso-n .tecla{display:inline-block;background:#1f3d2b;color:#fff;border-radius:6px;padding:1px 7px;font-size:12.5px;font-weight:700;white-space:nowrap;line-height:1.5}
+.paso-n .tecla.gris{background:#4a4a4a}.paso-n .tecla.rojo{background:#c62828}.paso-n .tecla.naranja{background:#b35c00}
+.paso-n .tecla.azul{background:#1565c0}.paso-n .tecla.morado{background:#5e35b1}
+.ojo{background:#eef4ff;border-left:3px solid #1565c0;border-radius:0 7px 7px 0;padding:8px 10px;font-size:12.5px;color:#1a3a5c;line-height:1.5;margin:10px 0 0 35px}
 .modal-fondo{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:16px}
 .modal-caja{background:white;border-radius:12px;padding:22px;max-width:380px;width:100%;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.35)}
 .modal-caja img{width:64px;height:64px;border-radius:50%;border:2px solid #6d1f2a;object-fit:cover}
@@ -491,20 +507,78 @@ a.btn{display:block;text-align:center;text-decoration:none}
   <div class="hoja">
     <div class="hoja-cabeza"><h3>📖 Cómo usar la app</h3><button class="hoja-x" onclick="cerrarHoja('hojaInstructivo')" aria-label="Cerrar">&times;</button></div>
     <div class="hoja-cuerpo">
-      <div class="ayuda-tit">Antes de empezar</div>
-      <div class="ayuda-paso"><div class="ayuda-num">1</div><div><b>Activá la ubicación</b><p>El GPS del teléfono debe estar encendido. Sin ubicación la app no deja registrar nada.</p></div></div>
-      <div class="ayuda-paso"><div class="ayuda-num">2</div><div><b>Entrá con tu código</b><p>Escribí tu código personal y tocá Ingresar. La sesión te dura 20 horas, así que no tenés que entrar a cada rato.</p></div></div>
+      <p style="font-size:13px;color:#666;line-height:1.5;margin:10px 0 4px">Tocá lo que querés hacer y te muestro los pasos exactos, uno por uno.</p>
 
-      <div class="ayuda-tit">Durante la cobertura</div>
-      <div class="ayuda-paso"><div class="ayuda-num">3</div><div><b>Iniciar cobertura</b><p>Elegí la placa de la unidad que vas a cubrir, tomá la foto y enviá. Solo vos podés tener esa unidad a la vez.</p></div></div>
-      <div class="ayuda-paso"><div class="ayuda-num">4</div><div><b>Enviar seguimiento</b><p>Durante el recorrido mandá seguimientos con foto. Cada uno deja tu ubicación registrada.</p></div></div>
-      <div class="ayuda-paso"><div class="ayuda-num">5</div><div><b>Reportar novedad</b><p>Si hay pinchazo, accidente, falla mecánica o zona de riesgo, reportalo de una vez. Después podés reanudar o finalizar sin cobertura.</p></div></div>
-      <div class="ayuda-paso"><div class="ayuda-num">6</div><div><b>Finalizar</b><p>Al terminar, tomá la foto final, indicá si hiciste las rondas y enviá. <b style="display:inline">Si no finalizás, la unidad queda ocupada</b> y nadie más la puede tomar.</p></div></div>
+      <details class="tarea"><summary><span class="ico">🔑</span>Entrar al sistema</summary><div class="tarea-cuerpo">
+        <div class="paso-n"><i>1</i><span>Activá la <b>ubicación</b> de tu teléfono. Sin ella la app no deja registrar nada.</span></div>
+        <div class="paso-n"><i>2</i><span>Abrí la app. Vas a ver la pantalla <b>Identificate</b>.</span></div>
+        <div class="paso-n"><i>3</i><span>Escribí tu <b>código personal</b> en la casilla.</span></div>
+        <div class="paso-n"><i>4</i><span>Tocá <span class="tecla rojo">🔑 Ingresar al sistema</span>.</span></div>
+        <div class="paso-n"><i>5</i><span>Llegás a tu panel, donde dice <b>Hola, (tu nombre)</b>.</span></div>
+        <div class="ojo">La sesión te dura <b>20 horas</b>. No tenés que entrar cada vez que abrís la app.</div>
+      </div></details>
 
-      <div class="ayuda-tit">Bueno saber</div>
-      <div class="ayuda-paso"><div class="ayuda-num">✓</div><div><b>Cambiaste de teléfono</b><p>Entrá con tu mismo código. El sistema recuerda si tenías una ruta abierta y te la devuelve.</p></div></div>
-      <div class="ayuda-paso"><div class="ayuda-num">✓</div><div><b>El botón rojo del teléfono</b><p>Abajo a la derecha, siempre a la mano, llama directo a la Central de Alerta y Respuesta.</p></div></div>
-      <div class="ayuda-nota"><b>Recordá:</b> la foto y la ubicación son obligatorias en cada paso. Son la evidencia de tu cobertura.</div>
+      <details class="tarea"><summary><span class="ico">🏍️</span>Iniciar una cobertura</summary><div class="tarea-cuerpo">
+        <div class="paso-n"><i>1</i><span>En tu panel tocá <span class="tecla">🏍️ Iniciar cobertura</span>.</span></div>
+        <div class="paso-n"><i>2</i><span>Se abre <b>¿A qué unidad vas a apoyar?</b>. Escribí la <b>placa de la unidad</b> (no la de tu moto).</span></div>
+        <div class="paso-n"><i>3</i><span>Tocá otra vez <span class="tecla">🏍️ Iniciar cobertura</span>.</span></div>
+        <div class="paso-n"><i>4</i><span>Tocá <span class="tecla gris">📍 Capturar ubicación</span> y esperá a que diga <b>✅ Ubicación capturada</b>.</span></div>
+        <div class="paso-n"><i>5</i><span>Tocá <b>📸 Foto de la unidad</b>, tomá la foto y <b>revisá que se vea</b> en la pantalla.</span></div>
+        <div class="paso-n"><i>6</i><span>Tocá <span class="tecla">✅ Confirmar inicio</span> y <b>esperá sin tocar nada</b> hasta que diga <b>"Ruta iniciada correctamente"</b>.</span></div>
+        <div class="ojo">Desde ese momento la unidad queda <b>a tu nombre</b> y nadie más puede tomarla hasta que la finalices.</div>
+      </div></details>
+
+      <details class="tarea"><summary><span class="ico">📋</span>Enviar un seguimiento</summary><div class="tarea-cuerpo">
+        <div class="paso-n"><i>1</i><span>En tu panel tocá <span class="tecla azul">📋 Enviar seguimiento</span>.</span></div>
+        <div class="paso-n"><i>2</i><span>Tocá <span class="tecla gris">📍 Capturar ubicación</span>.</span></div>
+        <div class="paso-n"><i>3</i><span>Tocá <b>📸 Foto</b> y tomá la foto.</span></div>
+        <div class="paso-n"><i>4</i><span>Tocá <span class="tecla azul">📋 Enviar seguimiento</span> y esperá <b>"Seguimiento registrado correctamente"</b>.</span></div>
+        <div class="ojo">Mandá seguimientos durante todo el recorrido. Cada uno deja tu ubicación y tu foto registradas.</div>
+      </div></details>
+
+      <details class="tarea"><summary><span class="ico">🏁</span>Finalizar la cobertura</summary><div class="tarea-cuerpo">
+        <div class="paso-n"><i>1</i><span>En tu panel tocá <span class="tecla naranja">🏁 Finalizar cobertura</span>.</span></div>
+        <div class="paso-n"><i>2</i><span>Tocá <span class="tecla gris">📍 Capturar ubicación</span>.</span></div>
+        <div class="paso-n"><i>3</i><span>Tocá <b>📸 Foto de cierre</b> y tomá la foto.</span></div>
+        <div class="paso-n"><i>4</i><span>En <b>¿Realizó rondas?</b> elegí <b>Sí</b> o <b>No</b>. Si ponés No, escribí el motivo.</span></div>
+        <div class="paso-n"><i>5</i><span>Si querés, escribí algo en <b>Observaciones</b>.</span></div>
+        <div class="paso-n"><i>6</i><span>Tocá <span class="tecla naranja">🏁 Finalizar cobertura</span> y esperá <b>"Ruta finalizada correctamente"</b>.</span></div>
+        <div class="ojo"><b>Siempre finalizá.</b> Si no lo hacés, la unidad queda ocupada a tu nombre y nadie más la puede tomar.</div>
+      </div></details>
+
+      <details class="tarea"><summary><span class="ico">⚠️</span>Pasó algo en la ruta (pinchazo, accidente…)</summary><div class="tarea-cuerpo">
+        <div class="paso-n"><i>1</i><span>En tu panel tocá <span class="tecla morado">⚠️ No puedo continuar cobertura</span>.</span></div>
+        <div class="paso-n"><i>2</i><span>Elegí el <b>Tipo de novedad</b> en la lista.</span></div>
+        <div class="paso-n"><i>3</i><span>Tocá <span class="tecla gris">📍 Capturar ubicación</span> y tomá la <b>📸 Foto de evidencia</b>.</span></div>
+        <div class="paso-n"><i>4</i><span>Escribí en <b>Descripción</b> qué pasó.</span></div>
+        <div class="paso-n"><i>5</i><span>Tocá <span class="tecla morado">📨 Enviar reporte</span>.</span></div>
+        <div class="paso-n"><i>6</i><span>Cuando se resuelva, tocá <span class="tecla">✅ Se resolvió — Continuar cobertura</span>, capturá ubicación y foto, y tocá <span class="tecla">✅ Confirmar — incidente resuelto</span>.</span></div>
+        <div class="paso-n"><i>7</i><span>Si <b>no</b> se pudo resolver, tocá <span class="tecla rojo">❌ No se resolvió — Finalizar</span>.</span></div>
+        <div class="ojo">La Central ve tu novedad apenas la enviás. Si es grave, además <b>llamá</b> con el botón rojo del teléfono.</div>
+      </div></details>
+
+      <details class="tarea"><summary><span class="ico">🔧</span>No pude ni empezar la cobertura</summary><div class="tarea-cuerpo">
+        <div class="paso-n"><i>1</i><span>Tocá <span class="tecla">🏍️ Iniciar cobertura</span> y escribí la <b>placa de la unidad</b>.</span></div>
+        <div class="paso-n"><i>2</i><span>Tocá <span class="tecla morado">🔧 No puedo iniciar cobertura</span>.</span></div>
+        <div class="paso-n"><i>3</i><span>Elegí el tipo, capturá ubicación, tomá la foto y escribí la descripción.</span></div>
+        <div class="paso-n"><i>4</i><span>Tocá <span class="tecla morado">📨 Enviar reporte</span>.</span></div>
+        <div class="paso-n"><i>5</i><span>Si después podés empezar, tocá <span class="tecla">✅ Se resolvió — Iniciar cobertura</span>. Si no, tocá <span class="tecla rojo">❌ No se resolvió — Finalizar sin cobertura</span>.</span></div>
+      </div></details>
+
+      <details class="tarea"><summary><span class="ico">📱</span>Cambié de teléfono o se cerró la app</summary><div class="tarea-cuerpo">
+        <div class="paso-n"><i>1</i><span>Abrí la app y entrá con <b>tu mismo código</b>.</span></div>
+        <div class="paso-n"><i>2</i><span>El sistema revisa solo si tenías una cobertura abierta.</span></div>
+        <div class="paso-n"><i>3</i><span>Si la tenías, arriba vas a ver <b>Ruta activa</b> con la placa, y podés seguir normal.</span></div>
+        <div class="ojo">No vuelvas a iniciar una cobertura que ya habías iniciado: el sistema te va a decir <i>"Ya tenés una ruta iniciada"</i>.</div>
+      </div></details>
+
+      <details class="tarea"><summary><span class="ico">📞</span>Necesito llamar a la Central</summary><div class="tarea-cuerpo">
+        <div class="paso-n"><i>1</i><span>Tocá el <b>círculo blanco con el teléfono rojo</b>, abajo a la derecha de la pantalla.</span></div>
+        <div class="paso-n"><i>2</i><span>Se abre el marcador con el número de la Central: <b>5695-0128</b>.</span></div>
+        <div class="ojo">Ese botón está siempre a la mano, en cualquier pantalla de la app.</div>
+      </div></details>
+
+      <div class="ayuda-nota"><b>Las tres reglas de oro:</b><br>1. La <b>foto</b> y la <b>ubicación</b> son obligatorias en cada paso.<br>2. Después de tocar enviar, <b>esperá el mensaje verde</b> antes de hacer otra cosa.<br>3. <b>Siempre finalizá</b> tu cobertura al terminar.</div>
     </div>
   </div>
 </div>
