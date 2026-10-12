@@ -130,6 +130,12 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .paso-n .tecla.gris{background:#4a4a4a}.paso-n .tecla.rojo{background:#c62828}.paso-n .tecla.naranja{background:#b35c00}
 .paso-n .tecla.azul{background:#1565c0}.paso-n .tecla.morado{background:#5e35b1}
 .ojo{background:#eef4ff;border-left:3px solid #1565c0;border-radius:0 7px 7px 0;padding:8px 10px;font-size:12.5px;color:#1a3a5c;line-height:1.5;margin:10px 0 0 35px}
+.nono{border:1px solid #ecdcdc;border-radius:10px;padding:11px 12px;margin:11px 0;background:#fffafa}
+.nono>b{display:block;font-size:13.5px;color:#c62828;line-height:1.45;margin-bottom:7px}
+.nono p{font-size:13px;color:#444;line-height:1.5;margin-top:5px}
+.nono p .et{font-weight:700}
+.nono p.q .et{color:#b35c00}
+.nono p.h .et{color:#1b7f2a}
 .modal-fondo{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:16px}
 .modal-caja{background:white;border-radius:12px;padding:22px;max-width:380px;width:100%;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.35)}
 .modal-caja img{width:64px;height:64px;border-radius:50%;border:2px solid #6d1f2a;object-fit:cover}
@@ -496,6 +502,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <div class="hoja-cuerpo">
       <button class="menu-op" onclick="abrirHojaDesdeMenu('hojaInstructivo')"><span class="ico">📖</span><span><b>Cómo usar la app</b><small>Paso a paso, desde iniciar hasta finalizar</small></span></button>
       <button class="menu-op" onclick="abrirHojaDesdeMenu('hojaFallas')"><span class="ico">⚠️</span><span><b>Problemas frecuentes</b><small>Qué significa cada mensaje y qué hacer</small></span></button>
+      <button class="menu-op" onclick="abrirHojaDesdeMenu('hojaNoHacer')"><span class="ico">🚫</span><span><b>Lo que NO hay que hacer</b><small>Errores comunes y qué problema causan</small></span></button>
       <a class="menu-op" href="tel:+50256950128"><span class="ico">📞</span><span><b>Llamar a la Central</b><small>5695-0128 · Alerta y Respuesta</small></span></a>
       <button class="menu-op" onclick="cerrarHoja('hojaMenu');abrirCreditos()"><span class="ico">ℹ️</span><span><b>Acerca de</b><small>Versión y créditos</small></span></button>
     </div>
@@ -515,7 +522,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <div class="paso-n"><i>3</i><span>Escribí tu <b>código personal</b> en la casilla.</span></div>
         <div class="paso-n"><i>4</i><span>Tocá <span class="tecla rojo">🔑 Ingresar al sistema</span>.</span></div>
         <div class="paso-n"><i>5</i><span>Llegás a tu panel, donde dice <b>Hola, (tu nombre)</b>.</span></div>
-        <div class="ojo">La sesión te dura <b>20 horas</b>. No tenés que entrar cada vez que abrís la app.</div>
+        <div class="ojo"><b>No tenés que escribir tu código cada vez.</b> Una vez que entraste, podés cerrar la app y volver a abrirla: esperá unos segundos a que cargue y vas a caer directo en la pantalla donde te quedaste, con tu cobertura tal como la dejaste. Solo volvés a escribir tu código después de <b>20 horas</b>, o si tocaste Cerrar sesión.</div>
       </div></details>
 
       <details class="tarea"><summary><span class="ico">🏍️</span>Iniciar una cobertura</summary><div class="tarea-cuerpo">
@@ -523,8 +530,9 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <div class="paso-n"><i>2</i><span>Se abre <b>¿A qué unidad vas a apoyar?</b>. Escribí la <b>placa de la unidad</b> (no la de tu moto).</span></div>
         <div class="paso-n"><i>3</i><span>Tocá otra vez <span class="tecla">🏍️ Iniciar cobertura</span>.</span></div>
         <div class="paso-n"><i>4</i><span>Tocá <span class="tecla gris">📍 Capturar ubicación</span> y esperá a que diga <b>✅ Ubicación capturada</b>.</span></div>
-        <div class="paso-n"><i>5</i><span>Tocá <b>📸 Foto de la unidad</b>, tomá la foto y <b>revisá que se vea</b> en la pantalla.</span></div>
-        <div class="paso-n"><i>6</i><span>Tocá <span class="tecla">✅ Confirmar inicio</span> y <b>esperá sin tocar nada</b> hasta que diga <b>"Ruta iniciada correctamente"</b>.</span></div>
+        <div class="paso-n"><i>5</i><span>Tocá <b>📸 Foto de la unidad</b> y tomá la foto. Que se vea la unidad y, de ser posible, <b>su placa</b>. Revisá en la pantalla que haya quedado bien.</span></div>
+        <div class="paso-n"><i>6</i><span>Tocá <span class="tecla">✅ Confirmar inicio</span>.</span></div>
+        <div class="paso-n"><i>7</i><span><b>Ahora solo esperá.</b> El botón va a decir <i>Enviando…</i> mientras se guarda la foto. Puede tardar varios segundos, y si hay muchos compañeros enviando al mismo tiempo puede tardar más. <b>Es normal.</b> No toques de nuevo, no cierres la app y no recargues: esperá hasta que aparezca <b>"Ruta iniciada correctamente"</b>.</span></div>
         <div class="ojo">Desde ese momento la unidad queda <b>a tu nombre</b> y nadie más puede tomarla hasta que la finalices.</div>
       </div></details>
 
@@ -546,23 +554,26 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <div class="ojo"><b>Siempre finalizá.</b> Si no lo hacés, la unidad queda ocupada a tu nombre y nadie más la puede tomar.</div>
       </div></details>
 
-      <details class="tarea"><summary><span class="ico">⚠️</span>Pasó algo en la ruta (pinchazo, accidente…)</summary><div class="tarea-cuerpo">
+      <details class="tarea"><summary><span class="ico">⚠️</span>Algo me impide seguir dando la cobertura</summary><div class="tarea-cuerpo">
+        <div class="ojo" style="margin-left:0;background:#fff6ec;border-left-color:#b35c00;color:#6b3c00"><b>Esto es para lo que te pasa a vos o a tu moto</b>, no a la unidad que estás cubriendo. Si la unidad se pincha o se descompone pero vos seguís ahí acompañándola, <b>la cobertura sigue</b>: no reportes nada, seguí mandando tus seguimientos. Reportá solo cuando vos ya no podés seguir al lado de la unidad.</div>
         <div class="paso-n"><i>1</i><span>En tu panel tocá <span class="tecla morado">⚠️ No puedo continuar cobertura</span>.</span></div>
-        <div class="paso-n"><i>2</i><span>Elegí el <b>Tipo de novedad</b> en la lista.</span></div>
-        <div class="paso-n"><i>3</i><span>Tocá <span class="tecla gris">📍 Capturar ubicación</span> y tomá la <b>📸 Foto de evidencia</b>.</span></div>
-        <div class="paso-n"><i>4</i><span>Escribí en <b>Descripción</b> qué pasó.</span></div>
-        <div class="paso-n"><i>5</i><span>Tocá <span class="tecla morado">📨 Enviar reporte</span>.</span></div>
-        <div class="paso-n"><i>6</i><span>Cuando se resuelva, tocá <span class="tecla">✅ Se resolvió — Continuar cobertura</span>, capturá ubicación y foto, y tocá <span class="tecla">✅ Confirmar — incidente resuelto</span>.</span></div>
-        <div class="paso-n"><i>7</i><span>Si <b>no</b> se pudo resolver, tocá <span class="tecla rojo">❌ No se resolvió — Finalizar</span>.</span></div>
+        <div class="paso-n"><i>2</i><span>Elegí en la lista <b>qué fue lo que te impide seguir</b>: se te pinchó la moto, se te acabó la gasolina, tuviste un accidente, una emergencia personal o no podés pasar por la zona.</span></div>
+        <div class="paso-n"><i>3</i><span>Tocá <span class="tecla gris">📍 Capturar ubicación</span> y tomá la <b>📸 Foto de evidencia</b> de lo que te pasó.</span></div>
+        <div class="paso-n"><i>4</i><span>Escribí en <b>Descripción</b> qué pasó, con tus palabras.</span></div>
+        <div class="paso-n"><i>5</i><span>Tocá <span class="tecla morado">📨 Enviar reporte</span>. Desde ese momento tu cobertura queda <b>en pausa</b>, no finalizada.</span></div>
+        <div class="paso-n"><i>6</i><span>Si lo resolviste y <b>ya estás otra vez con la unidad</b>, tocá <span class="tecla">✅ Se resolvió — Continuar cobertura</span>, capturá ubicación, tomá la foto y tocá <span class="tecla">✅ Confirmar — incidente resuelto</span>. Hacé esto <b>cuando ya alcanzaste la unidad</b>, no antes.</span></div>
+        <div class="paso-n"><i>7</i><span>Si no lo resolviste y <b>ya no vas a alcanzar la unidad</b>, tocá <span class="tecla rojo">❌ No se resolvió — Finalizar</span>.</span></div>
         <div class="ojo">La Central ve tu novedad apenas la enviás. Si es grave, además <b>llamá</b> con el botón rojo del teléfono.</div>
       </div></details>
 
       <details class="tarea"><summary><span class="ico">🔧</span>No pude ni empezar la cobertura</summary><div class="tarea-cuerpo">
-        <div class="paso-n"><i>1</i><span>Tocá <span class="tecla">🏍️ Iniciar cobertura</span> y escribí la <b>placa de la unidad</b>.</span></div>
+        <div class="ojo" style="margin-left:0">Es lo mismo que lo anterior, pero cuando el problema aparece <b>antes de empezar</b>: no llegaste a la unidad, se te quedó la moto saliendo, no te dieron paso.</div>
+        <div class="paso-n"><i>1</i><span>Tocá <span class="tecla">🏍️ Iniciar cobertura</span> y escribí la <b>placa de la unidad</b> que te tocaba.</span></div>
         <div class="paso-n"><i>2</i><span>Tocá <span class="tecla morado">🔧 No puedo iniciar cobertura</span>.</span></div>
         <div class="paso-n"><i>3</i><span>Elegí el tipo, capturá ubicación, tomá la foto y escribí la descripción.</span></div>
-        <div class="paso-n"><i>4</i><span>Tocá <span class="tecla morado">📨 Enviar reporte</span>.</span></div>
-        <div class="paso-n"><i>5</i><span>Si después podés empezar, tocá <span class="tecla">✅ Se resolvió — Iniciar cobertura</span>. Si no, tocá <span class="tecla rojo">❌ No se resolvió — Finalizar sin cobertura</span>.</span></div>
+        <div class="paso-n"><i>4</i><span>Tocá <span class="tecla morado">📨 Enviar reporte</span>. Queda registrado que esa unidad todavía no recibió cobertura.</span></div>
+        <div class="paso-n"><i>5</i><span><b>Si después lograste llegar a la unidad</b>, tocá <span class="tecla">✅ Se resolvió — Iniciar cobertura</span>: capturá ubicación, tomá la foto de la unidad y confirmá. A partir de ahí la cobertura corre normal y seguís con tus seguimientos.</span></div>
+        <div class="paso-n"><i>6</i><span><b>Si nunca pudiste llegar</b>, tocá <span class="tecla rojo">❌ No se resolvió — Finalizar sin cobertura</span>.</span></div>
       </div></details>
 
       <details class="tarea"><summary><span class="ico">📱</span>Cambié de teléfono o se cerró la app</summary><div class="tarea-cuerpo">
@@ -579,6 +590,32 @@ a.btn{display:block;text-align:center;text-decoration:none}
       </div></details>
 
       <div class="ayuda-nota"><b>Las tres reglas de oro:</b><br>1. La <b>foto</b> y la <b>ubicación</b> son obligatorias en cada paso.<br>2. Después de tocar enviar, <b>esperá el mensaje verde</b> antes de hacer otra cosa.<br>3. <b>Siempre finalizá</b> tu cobertura al terminar.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LO QUE NO HAY QUE HACER ===== -->
+<div class="hoja-fondo" id="hojaNoHacer" onclick="if(event.target===this)cerrarHoja('hojaNoHacer')">
+  <div class="hoja">
+    <div class="hoja-cabeza"><h3>🚫 Lo que NO hay que hacer</h3><button class="hoja-x" onclick="cerrarHoja('hojaNoHacer')" aria-label="Cerrar">&times;</button></div>
+    <div class="hoja-cuerpo">
+      <div class="ayuda-tit">Al enviar</div>
+      <div class="nono"><b>❌ Tocar el botón de enviar varias veces porque tarda</b><p class="q"><span class="et">Qué pasa:</span> Cada toque se pone en la fila y la hace más larga, para vos y para todos. Podés quedar esperando el doble.</p><p class="h"><span class="et">Hacé esto:</span> Tocá una sola vez y esperá el mensaje.</p></div>
+      <div class="nono"><b>❌ Cerrar la app mientras dice “Enviando…”</b><p class="q"><span class="et">Qué pasa:</span> El envío se corta a medias. Tu registro puede no guardarse y vas a tener que repetirlo todo, con foto nueva.</p><p class="h"><span class="et">Hacé esto:</span> Dejá la pantalla abierta hasta ver el mensaje.</p></div>
+      <div class="nono"><b>❌ Recargar la página mientras se está enviando</b><p class="q"><span class="et">Qué pasa:</span> Lo mismo: se pierde el envío en curso.</p><p class="h"><span class="et">Hacé esto:</span> Recargá solo si la app quedó trabada y ya no dice “Enviando…”.</p></div>
+      <div class="nono"><b>❌ Tomar la foto con el lente tapado o todo oscuro</b><p class="q"><span class="et">Qué pasa:</span> Queda como evidencia inservible y la Central no puede verificar tu cobertura.</p><p class="h"><span class="et">Hacé esto:</span> Revisá la foto en pantalla antes de enviar.</p></div>
+      <div class="nono"><b>❌ Mandar todos los seguimientos desde el mismo punto</b><p class="q"><span class="et">Qué pasa:</span> Las coordenadas quedan iguales y parece que no acompañaste a la unidad.</p><p class="h"><span class="et">Hacé esto:</span> Mandá cada seguimiento desde donde realmente vas.</p></div>
+      <div class="ayuda-tit">Con la cobertura</div>
+      <div class="nono"><b>❌ Irte sin finalizar la cobertura</b><p class="q"><span class="et">Qué pasa:</span> La unidad queda ocupada a tu nombre. Al día siguiente <b>nadie puede tomarla</b>, ni vos ni otro compañero, hasta que un administrador la libere.</p><p class="h"><span class="et">Hacé esto:</span> Finalizá siempre, aunque sea tarde.</p></div>
+      <div class="nono"><b>❌ Escribir la placa de tu moto en vez de la de la unidad</b><p class="q"><span class="et">Qué pasa:</span> Registrás una cobertura a una unidad equivocada y la de verdad queda sin cubrir.</p><p class="h"><span class="et">Hacé esto:</span> Verificá la placa antes de confirmar.</p></div>
+      <div class="nono"><b>❌ Iniciar una unidad que no te asignaron</b><p class="q"><span class="et">Qué pasa:</span> La bloqueás para el compañero al que sí le tocaba.</p><p class="h"><span class="et">Hacé esto:</span> Si dudás de tu asignación, llamá a la Central antes de iniciar.</p></div>
+      <div class="nono"><b>❌ Reportar novedad por algo de la unidad mientras vos seguís ahí</b><p class="q"><span class="et">Qué pasa:</span> Tu cobertura queda en pausa sin necesidad y figura como interrumpida.</p><p class="h"><span class="et">Hacé esto:</span> Si seguís acompañando, seguí con tus seguimientos normales.</p></div>
+      <div class="nono"><b>❌ Prestar tu código a otra persona</b><p class="q"><span class="et">Qué pasa:</span> Todo lo que esa persona registre queda a tu nombre: su ubicación, sus fotos y su responsabilidad.</p><p class="h"><span class="et">Hacé esto:</span> Tu código es solo tuyo.</p></div>
+      <div class="ayuda-tit">Con el teléfono</div>
+      <div class="nono"><b>❌ Apagar la ubicación para ahorrar batería</b><p class="q"><span class="et">Qué pasa:</span> La app no te deja registrar nada y perdés tiempo parado en la calle.</p><p class="h"><span class="et">Hacé esto:</span> Dejá la ubicación encendida toda tu jornada.</p></div>
+      <div class="nono"><b>❌ Salir a ruta con el teléfono casi descargado</b><p class="q"><span class="et">Qué pasa:</span> Si se apaga a media ruta no podés finalizar, y la unidad queda ocupada.</p><p class="h"><span class="et">Hacé esto:</span> Salí con carga o llevá cargador.</p></div>
+      <div class="nono"><b>❌ Creer que perdiste todo porque se cerró la app</b><p class="q"><span class="et">Qué pasa:</span> No se pierde nada: lo que ya enviaste está guardado en el sistema.</p><p class="h"><span class="et">Hacé esto:</span> Volvé a entrar con tu código y seguí donde ibas.</p></div>
+      <div class="ayuda-nota"><b>En una frase:</b> una sola vez el botón, esperá el mensaje, y finalizá siempre.</div>
     </div>
   </div>
 </div>
