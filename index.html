@@ -756,11 +756,21 @@ function cerrarCreditos() { document.getElementById('modalCreditos').style.displ
 // ---------- Indicador de conexión ----------
 // SOLO INFORMATIVO: nunca bloquea ni modifica ningún envío. Únicamente avisa al
 // motorizado si conviene recargar antes de mandar un reporte.
-const PING_INTERVALO_MS = 60000;   // cada 60 s mientras la app está a la vista
-const PING_TIMEOUT_MS = 8000;      // si no responde en 8 s, cuenta como fallo
-const PING_LENTO_MS = 4000;        // respuesta más lenta que esto = conexión lenta
+//
+// AJUSTE 16-10-2026. Se midió el servidor real: una consulta simple tarda entre
+// 2 y 4.5 segundos de forma normal. Los límites anteriores (4 s = lento,
+// 8 s = fallo, 2 fallos = rojo) quedaban ENCIMA del tiempo normal, así que el
+// indicador marcaba "Sin conexión" con el sistema funcionando bien.
+// Además consultaba cada 60 s desde cada teléfono, lo que sumaba carga justo
+// en el arranque de la mañana, que es cuando el sistema va más apretado.
+const PING_INTERVALO_MS = 300000;          // cada 5 minutos (antes: 60 s)
+const PING_TIMEOUT_MS = 20000;             // fallo si no responde en 20 s (antes: 8 s)
+const PING_LENTO_MS = 7000;                // más lento que esto = va lento (antes: 4 s)
+const PING_FALLOS_PARA_AVISO = 3;          // fallos seguidos antes de avisar (antes: 2)
+const PING_MIN_ENTRE_CHEQUEOS_MS = 60000;  // nunca dos consultas automáticas en menos de 1 minuto
 let pingFallos = 0;
 let pingEnCurso = false;
+let pingUltimo = 0;
 
 function pintarConexion(estado, texto) {
   const pill = document.getElementById('conexionPill');
@@ -771,10 +781,15 @@ function pintarConexion(estado, texto) {
     (estado === 'ok' || estado === 'verificando') ? 'none' : 'inline-flex';
 }
 
-async function verificarConexion(manual) {
+async function verificarConexion(modo) {
   if (pingEnCurso) return;
+  // Freno: las consultas automáticas no pueden ir más seguido que 1 por minuto.
+  // Las que pide el usuario (modo === true) y los reintentos no pasan por el freno.
+  if (modo !== true && modo !== 'reintento' &&
+      Date.now() - pingUltimo < PING_MIN_ENTRE_CHEQUEOS_MS) return;
   pingEnCurso = true;
-  if (manual === true) pintarConexion('verificando', 'Verificando…');
+  pingUltimo = Date.now();
+  if (modo === true) pintarConexion('verificando', 'Verificando…');
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), PING_TIMEOUT_MS);
   const t0 = Date.now();
@@ -794,17 +809,25 @@ async function verificarConexion(manual) {
     clearTimeout(timer);
     pingFallos++;
     if (navigator.onLine === false) pintarConexion('error', 'Sin internet');
-    else if (pingFallos >= 2) pintarConexion('error', 'Sin conexión');
+    else if (pingFallos >= PING_FALLOS_PARA_AVISO) pintarConexion('error', 'Sistema lento');
     else { pintarConexion('lento', 'Reintentando…'); reintentar = true; }
   }
   pingEnCurso = false;
-  if (reintentar) setTimeout(() => verificarConexion(false), 5000);
+  if (reintentar) setTimeout(() => verificarConexion('reintento'), 5000);
 }
 
 function iniciarMonitorConexion() {
-  verificarConexion(false);
-  setInterval(() => { if (document.visibilityState === 'visible') verificarConexion(false); }, PING_INTERVALO_MS);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') verificarConexion(false); });
+  // Una consulta al abrir, para que el indicador muestre algo de entrada.
+  verificarConexion('reintento');
+  // De ahí en adelante, cada 5 minutos y solo con la app a la vista. El freno de
+  // 1 minuto de verificarConexion() evita que los cambios de pantalla disparen
+  // consultas seguidas, que era lo que más carga sumaba.
+  setInterval(() => {
+    if (document.visibilityState === 'visible') verificarConexion(false);
+  }, PING_INTERVALO_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') verificarConexion(false);
+  });
   window.addEventListener('online', () => verificarConexion(true));
   window.addEventListener('offline', () => pintarConexion('error', 'Sin internet'));
 }
