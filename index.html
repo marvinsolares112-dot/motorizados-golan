@@ -1069,7 +1069,14 @@ function actualizarBotonesPanel() {
   const rutaActiva = localStorage.getItem('rutaActiva_' + sesion.codigo);
   const novGuardada = localStorage.getItem('novedad_' + sesion.codigo);
   novedadActiva = novGuardada ? JSON.parse(novGuardada) : null;
-  placaSeleccionada = localStorage.getItem('placaActiva_' + sesion.codigo) || '';
+  // ARREGLO 16-10-2026. Esta función también corre cuando la respuesta del
+  // servidor llega tarde (sincronizarEstadoLogin la espera hasta 12 segundos).
+  // Si para entonces el motorizado ya se pasó a la pantalla de iniciar cobertura,
+  // pisar placaSeleccionada le borraba la placa que había elegido: la pantalla
+  // seguía mostrándola, pero la cobertura se registraba SIN unidad.
+  // Por eso ahora solo se toca cuando el panel está realmente a la vista.
+  const panelALaVista = document.getElementById('pasoMotorizado').classList.contains('active');
+  if (panelALaVista) placaSeleccionada = localStorage.getItem('placaActiva_' + sesion.codigo) || '';
 
   const badge = document.getElementById('badgeEstado');
   const botonesDiv = document.getElementById('botonesPanel');
@@ -1347,6 +1354,14 @@ async function enviarInicioRuta() {
     mostrarMsg('inicioMsg', 'Debés cargar una foto de la unidad para iniciar.', 'err');
     return;
   }
+  // ARREGLO 16-10-2026. Red de seguridad: pase lo que pase, no se manda un
+  // inicio de cobertura sin una placa válida. Antes, si la placa se perdía,
+  // se escribía una fila sin unidad y el motorizado quedaba trabado: la
+  // aplicación le decía que no tenía ruta y el servidor que ya tenía una.
+  if (!placaSeleccionada || !MAESTRO[placaSeleccionada]) {
+    mostrarMsg('inicioMsg', 'Se perdió la placa seleccionada. Tocá "Volver" y elegí la unidad otra vez.', 'err');
+    return;
+  }
   const btn = event.target; btn.disabled = true; btn.textContent = 'Enviando...';
   const placaIntentada = placaSeleccionada;
   try {
@@ -1403,6 +1418,42 @@ async function enviarInicioRuta() {
   btn.disabled = false; btn.textContent = '✅ Confirmar inicio';
 }
 
+// Errores que el motorizado SÍ puede resolver por su cuenta. Cualquier otra
+// respuesta rara (incluida "Acción no reconocida") NO significa que no se guardó.
+const ERRORES_QUE_PUEDE_RESOLVER = [
+  'No tenés una ruta iniciada',
+  'fotografía obligatoria',
+  'ubicación GPS obligatoria',
+  'El sistema está ocupado'
+];
+function esErrorQuePuedeResolver(texto) {
+  const e = (texto || '').toString();
+  return ERRORES_QUE_PUEDE_RESOLVER.some(function (p) { return e.indexOf(p) !== -1; });
+}
+const avisoNoConfirmado = 'No pudimos confirmar el envío, pero es muy posible que SÍ se haya registrado. ' +
+  'No lo mandes de nuevo todavía: esperá un momento y consultá a la Central. Reenviarlo puede duplicarlo.';
+
+// Le pregunta al servidor cuál fue el último seguimiento registrado de esta
+// persona. Si cambió respecto al que ya teníamos anotado, el envío SÍ llegó.
+// No se comparan relojes: se compara contra lo último que nosotros sabíamos,
+// así no importa si el teléfono tiene la hora corrida.
+async function consultarUltimoSeguimiento() {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 12000);
+    const res = await fetch(`${SCRIPT_URL}?action=ultimoSeguimiento&codigo=${encodeURIComponent(sesion.codigo)}&t=${Date.now()}`,
+                            {signal: ctrl.signal, cache: 'no-store'});
+    clearTimeout(t);
+    const d = await res.json();
+    // Un servidor que todavía no conoce esta consulta responde success:false:
+    // en ese caso devolvemos null y la app usa el aviso prudente de siempre.
+    if (d && d.success && typeof d.ms !== 'undefined') return d;
+    return null;
+  } catch (e) { return null; }
+}
+
+const claveUltimoSeg = () => 'ultimoSegMs_' + sesion.codigo;
+
 async function enviarSeguimiento() {
   if (!gpsData.segGps) { mostrarMsg('segMsg', 'Capturá la ubicación GPS primero.', 'err'); return; }
   const fotoSrc = document.getElementById('segFotoPreview').src;
@@ -1420,12 +1471,46 @@ async function enviarSeguimiento() {
       foto: fotoSrc
     }));
     const data = await res.json();
-    mostrarMsg('segMsg', data.success ? data.mensaje : data.error, data.success ? 'ok' : 'err');
-    if (data.success) setTimeout(volverPanel, 2000);
+    if (data.success) {
+      // duplicado:true = el servidor reconoció que ya lo tenía y no lo repitió.
+      mostrarMsg('segMsg', data.mensaje, 'ok');
+      try { if (data.horaRegistro) localStorage.setItem(claveUltimoSeg(), data.horaRegistro); } catch (e) {}
+      setTimeout(volverPanel, 2000);
+    } else if (esErrorQuePuedeResolver(data.error)) {
+      mostrarMsg('segMsg', data.error, 'err');
+    } else if (await resolverDudaSeguimiento()) {
+      // ya se mostró el mensaje adentro
+    } else {
+      // ARREGLO 16-10-2026. Antes se mostraba el error del servidor tal cual y se
+      // le decía al motorizado que volviera a enviar "sin riesgo de duplicar".
+      // Eso es falso: el servidor no revisa duplicados, así que si el seguimiento
+      // SÍ se había guardado y solo se perdió la respuesta, el reenvío creaba una
+      // segunda fila y una segunda copia de la foto en Drive. Caso real del
+      // 16 de octubre: salió "Acción no reconocida" y la fila ya estaba escrita.
+      mostrarMsg('segMsg', avisoNoConfirmado, 'wait');
+    }
   } catch(e) {
-    mostrarMsg('segMsg', 'Error de conexión. Si el problema persiste, tocá enviar de nuevo — no hay riesgo de duplicar el seguimiento.', 'err');
+    mostrarMsg('segMsg', 'Verificando si se guardó…', 'wait');
+    if (!(await resolverDudaSeguimiento())) mostrarMsg('segMsg', avisoNoConfirmado, 'wait');
   }
   btn.disabled = false; btn.textContent = '📋 Enviar seguimiento';
+}
+
+// Devuelve true si logró averiguarlo (y ya mostró el mensaje correcto).
+// Devuelve false si no se pudo averiguar; ahí se usa el aviso prudente.
+async function resolverDudaSeguimiento() {
+  const u = await consultarUltimoSeguimiento();
+  if (!u) return false;
+  let anterior = null;
+  try { anterior = localStorage.getItem(claveUltimoSeg()); } catch (e) {}
+  if (u.ms && u.hora && u.hora !== anterior) {
+    try { localStorage.setItem(claveUltimoSeg(), u.hora); } catch (e) {}
+    mostrarMsg('segMsg', 'Tu seguimiento SÍ quedó registrado a las ' + u.hora + '. No hace falta enviarlo de nuevo.', 'ok');
+    setTimeout(volverPanel, 3000);
+    return true;
+  }
+  mostrarMsg('segMsg', 'Tu seguimiento NO se registró. Volvé a tocar "Enviar seguimiento".', 'err');
+  return true;
 }
 
 async function enviarFin() {
@@ -2033,26 +2118,75 @@ function capturarGPS(key, txtId) {
   );
 }
 
+// AJUSTE 16-10-2026. Antes, para hacer la copia chica, la app abría la fotografía
+// COMPLETA en memoria: una foto de 12 MP ocupa unos 49 MB de RAM y una de 50 MP
+// unos 200 MB. En teléfonos con poca memoria libre, Android mataba la página
+// ("Memoria insuficiente para completar la operación anterior") y la app se
+// recargaba perdiendo la ubicación y la fotografía.
+//
+// Ahora se le pide al navegador que la abra YA REDUCIDA (createImageBitmap con
+// resizeWidth), así nunca llega a tener la fotografía entera en memoria. Si el
+// navegador no lo soporta, se usa un camino de respaldo con createObjectURL, que
+// al menos evita el texto base64 gigante que creaba FileReader. Y si aun así
+// falla, se avisa con un mensaje claro en vez de dejar a la persona sin saber.
+const FOTO_MAX_ANCHO = 640;
+const FOTO_CALIDAD = 0.6;
+
 function previsualizarFoto(inputId, previewId) {
   const file = document.getElementById(inputId).files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
+  const preview = document.getElementById(previewId);
+
+  function pintar(fuente, ancho, alto) {
+    let w = ancho, h = alto;
+    if (w > FOTO_MAX_ANCHO) { h = Math.round(h * FOTO_MAX_ANCHO / w); w = FOTO_MAX_ANCHO; }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(fuente, 0, 0, w, h);
+    preview.src = canvas.toDataURL('image/jpeg', FOTO_CALIDAD);
+    preview.style.display = 'block';
+    canvas.width = 0; canvas.height = 0;            // soltar la memoria del lienzo
+    if (fuente && typeof fuente.close === 'function') fuente.close();   // soltar el mapa de bits
+  }
+
+  function avisar() {
+    preview.src = '';
+    preview.style.display = 'none';
+    try { document.getElementById(inputId).value = ''; } catch (e) {}
+    alert('No se pudo procesar la fotografía en este teléfono.\n\n' +
+          'Intente lo siguiente:\n' +
+          '1. Cierre las demás aplicaciones y las otras pestañas del navegador.\n' +
+          '2. Vuelva a tomar la fotografía.\n' +
+          '3. Si continúa, reinicie el teléfono.\n\n' +
+          'No detenga su ruta: continúe y repórtelo a la Central.');
+  }
+
+  // Camino de respaldo: sin el texto base64 gigante de FileReader.
+  function caminoRespaldo() {
+    let url;
+    try { url = URL.createObjectURL(file); } catch (e) { avisar(); return; }
     const img = new Image();
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const MAX = 640;
-      let w = img.width, h = img.height;
-      if (w > MAX) { h = h*MAX/w; w = MAX; }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
-      const preview = document.getElementById(previewId);
-      preview.src = canvas.toDataURL('image/jpeg',0.6);
-      preview.style.display = 'block';
+      try { pintar(img, img.width, img.height); }
+      catch (e) { avisar(); }
+      finally { try { URL.revokeObjectURL(url); } catch (e) {} img.src = ''; }
     };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    img.onerror = () => { try { URL.revokeObjectURL(url); } catch (e) {} avisar(); };
+    img.src = url;
+  }
+
+  // Camino principal: el navegador decodifica y reduce de una sola vez.
+  if (typeof createImageBitmap === 'function') {
+    createImageBitmap(file, {
+      resizeWidth: FOTO_MAX_ANCHO,
+      resizeQuality: 'medium',
+      imageOrientation: 'from-image'
+    }).then(bmp => {
+      try { pintar(bmp, bmp.width, bmp.height); } catch (e) { avisar(); }
+    }).catch(() => caminoRespaldo());
+    return;
+  }
+  caminoRespaldo();
 }
 
 function toggleMotivoFin() {
