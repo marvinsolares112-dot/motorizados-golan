@@ -96,6 +96,9 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .etiqueta{display:inline-block;font-size:10px;padding:2px 6px;border-radius:6px;margin-left:4px;background:#eee;color:#555}
 .etiqueta.rojo{background:#f3d9dc;color:#6d1f2a}.etiqueta.amarillo{background:#f6ecc9;color:#8a6d1f}
 .novedad-banner{background:#f5efdd;border:1px solid #8a6d1f;border-radius:8px;padding:12px;margin-top:10px;font-size:13px;color:#8a6d1f}
+/* 20-10-2026: aviso de cuando corre el tiempo sin cobertura */
+.aviso-reloj{background:#fff6ec;border-left:4px solid #b35c00;border-radius:6px;padding:10px 12px;
+  margin-top:10px;font-size:13px;color:#6b3c00;line-height:1.4}
 .header-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .conexion-fila{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
 .conexion{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:none;color:white;border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit}
@@ -312,6 +315,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
   <div class="card">
     <div class="badge badge-purple">Reportar novedad</div>
     <h2>Registrar novedad en ruta</h2>
+    <p class="aviso-reloj">A partir de este momento se contabiliza el <b>tiempo sin cobertura</b> de la unidad.</p>
     <div class="info-box" id="infoNovedadResumen"></div>
     <label>Tipo de novedad</label>
     <select id="novedadTipo">
@@ -354,16 +358,16 @@ a.btn{display:block;text-align:center;text-decoration:none}
 <!-- FINALIZAR INCIDENTE — GPS + FOTO -->
 <div class="step" id="pasoFinalizarIncidente">
   <div class="card">
-    <div class="badge badge-green">Finalizar incidente</div>
-    <h2>¿Dónde se resolvió?</h2>
-    <p style="font-size:13px;color:#555;margin-top:4px;margin-bottom:8px">Capturá tu ubicación y una foto del lugar donde se resolvió el incidente.</p>
+    <div class="badge badge-green">Volver con la unidad</div>
+    <h2>¿Ya alcanzó la unidad?</h2>
+    <p class="aviso-reloj" id="txtAlcanzoUnidad" style="margin-bottom:8px"></p>
     <label>Ubicación GPS</label>
     <button class="btn btn-blue" onclick="capturarGPS('finIncGps','finIncGpsTxt')">📍 Capturar ubicación</button>
     <p class="gps-txt" id="finIncGpsTxt">Sin ubicación</p>
-    <label>📸 Foto de cierre del incidente (obligatoria)</label>
+    <label>📸 Foto de la unidad (obligatoria)</label>
     <input type="file" id="finIncFoto" accept="image/*" capture="environment" onchange="previsualizarFoto('finIncFoto','finIncFotoPreview')">
     <img id="finIncFotoPreview" class="foto-preview">
-    <button class="btn btn-green" id="btnConfirmarFinInc" onclick="confirmarFinalizarIncidente()">✅ Confirmar — incidente resuelto</button>
+    <button class="btn btn-green" id="btnConfirmarFinInc" onclick="confirmarFinalizarIncidente()">✅ Confirmar — ya estoy con la unidad</button>
     <button class="btn btn-gray" onclick="mostrarPaso('pasoPostNovedad')">⬅️ Volver</button>
     <div class="msg" id="finIncMsg"></div>
   </div>
@@ -374,7 +378,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
   <div class="card">
     <div class="badge badge-red">Sin cobertura</div>
     <h2>No se pudo brindar apoyo</h2>
-    <p style="font-size:13px;color:#555;margin-top:8px">Esto registrará que la unidad no recibió cobertura.</p>
+    <p class="aviso-reloj">Esto registrará que la unidad <b>no recibió cobertura por el resto de la ruta</b>.</p>
     <label>Ubicación GPS</label>
     <button class="btn btn-blue" onclick="capturarGPS('finSinGps','finSinGpsTxt')">📍 Capturar ubicación</button>
     <p class="gps-txt" id="finSinGpsTxt">Sin ubicación</p>
@@ -578,8 +582,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <div class="paso-n"><i>3</i><span>Presione <span class="tecla gris">📍 Capturar ubicación</span> y tome la <b>📸 Foto de evidencia</b> de la situación.</span></div>
         <div class="paso-n"><i>4</i><span>Describa en el campo <b>Descripción</b> lo ocurrido.</span></div>
         <div class="paso-n"><i>5</i><span>Presione <span class="tecla morado">📨 Enviar reporte</span>. A partir de ese momento la cobertura queda <b>en pausa</b>, no finalizada.</span></div>
-        <div class="paso-n"><i>6</i><span>Si resolvió la situación y <b>ya se encuentra nuevamente con la unidad</b>, presione <span class="tecla">✅ Se resolvió — Continuar cobertura</span>, capture la ubicación, tome la fotografía y presione <span class="tecla">✅ Confirmar — incidente resuelto</span>. Realice este registro <b>una vez que haya alcanzado la unidad</b>, no antes.</span></div>
-        <div class="paso-n"><i>7</i><span>Si no logró resolver la situación y <b>no alcanzará la unidad</b>, presione <span class="tecla rojo">❌ No se resolvió — Finalizar</span>.</span></div>
+        <div class="paso-n"><i>6</i><span><b>Una vez que se encuentre nuevamente con la unidad</b>, presione <span class="tecla">✅ Ya alcancé la unidad — Continuar cobertura</span>, capture la ubicación, tome la fotografía de la unidad y presione <span class="tecla">✅ Confirmar — ya estoy con la unidad</span>. Realice este registro <b>cuando ya haya alcanzado la unidad</b>, no antes: es el momento en que termina de contarse el tiempo sin cobertura.</span></div>
+        <div class="paso-n"><i>7</i><span>Si <b>no va a alcanzar la unidad</b>, presione <span class="tecla rojo">❌ No voy a alcanzar la unidad — Finalizar</span>. Quedará registrado que la unidad no recibió cobertura por el resto de la ruta.</span></div>
         <div class="ojo">La Central visualiza el reporte de inmediato. En caso de emergencia, comuníquese además por teléfono utilizando el botón de llamada.</div>
       </div></details>
 
@@ -589,8 +593,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <div class="paso-n"><i>2</i><span>Presione <span class="tecla morado">🔧 No puedo iniciar cobertura</span>.</span></div>
         <div class="paso-n"><i>3</i><span>Seleccione el motivo, capture la ubicación, tome la fotografía y registre la descripción.</span></div>
         <div class="paso-n"><i>4</i><span>Presione <span class="tecla morado">📨 Enviar reporte</span>. Queda constancia de que la unidad aún no ha recibido cobertura.</span></div>
-        <div class="paso-n"><i>5</i><span><b>Si posteriormente logra llegar a la unidad</b>, presione <span class="tecla">✅ Se resolvió — Iniciar cobertura</span>: capture la ubicación, tome la fotografía de la unidad y confirme. A partir de ese momento la cobertura se registra con normalidad y debe continuar con sus seguimientos.</span></div>
-        <div class="paso-n"><i>6</i><span><b>Si no logra llegar a la unidad</b>, presione <span class="tecla rojo">❌ No se resolvió — Finalizar sin cobertura</span>.</span></div>
+        <div class="paso-n"><i>5</i><span><b>Si posteriormente logra llegar a la unidad</b>, presione <span class="tecla">✅ Ya alcancé la unidad — Iniciar cobertura</span>: capture la ubicación, tome la fotografía de la unidad y confirme. A partir de ese momento la cobertura se registra con normalidad y debe continuar con sus seguimientos.</span></div>
+        <div class="paso-n"><i>6</i><span><b>Si no va a llegar a la unidad</b>, presione <span class="tecla rojo">❌ No voy a alcanzar la unidad — Finalizar sin cobertura</span>. Quedará registrado que la unidad no recibió cobertura.</span></div>
       </div></details>
 
       <details class="tarea"><summary><span class="ico">📱</span>Cambio de teléfono o cierre de la aplicación</summary><div class="tarea-cuerpo">
@@ -1106,13 +1110,13 @@ function actualizarBotonesPanel() {
 
     if (novedadActiva.teniaRuta) {
       botonesDiv.innerHTML = `
-        <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:10px">✅ Se resolvió — Continuar cobertura</button>
-        <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No se resolvió — Finalizar</button>
+        <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:10px">✅ Ya alcancé la unidad — Continuar cobertura</button>
+        <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No voy a alcanzar la unidad — Finalizar</button>
       `;
     } else {
       botonesDiv.innerHTML = `
-        <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:10px">✅ Se resolvió — Iniciar cobertura</button>
-        <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No se resolvió — Finalizar sin cobertura</button>
+        <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:10px">✅ Ya alcancé la unidad — Iniciar cobertura</button>
+        <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No voy a alcanzar la unidad — Finalizar sin cobertura</button>
       `;
     }
   } else if (rutaActiva) {
@@ -1138,6 +1142,11 @@ function actualizarBotonesPanel() {
 
 function irFinalizarIncidente(teniaRuta) {
   finIncidenteTeniaRuta = teniaRuta;
+  // El texto cambia segun el caso: si ya venia con la unidad dice "nuevamente";
+  // si nunca la alcanzo, ese "nuevamente" no aplica y ademas ahi empieza la cobertura.
+  document.getElementById('txtAlcanzoUnidad').innerHTML = teniaRuta
+    ? 'Capture su ubicación y una fotografía que demuestre que <b>ya está nuevamente con la unidad</b>. Aquí termina el tiempo sin cobertura.'
+    : 'Capture su ubicación y una fotografía que demuestre que <b>ya está con la unidad</b>. Aquí termina el tiempo sin cobertura y empieza la cobertura.';
   gpsData.finIncGps = null;
   document.getElementById('finIncGpsTxt').textContent = 'Sin ubicación';
   document.getElementById('finIncGpsTxt').style.color = '#777';
@@ -1174,7 +1183,7 @@ async function confirmarFinalizarIncidente() {
         localStorage.removeItem('novedad_' + sesion.codigo);
         novedadActiva = null;
         guardarEstadoFirebase({ estado: 'ruta', placa: localStorage.getItem('placaActiva_' + sesion.codigo) || '' });
-        mostrarMsg('finIncMsg', 'Incidente resuelto — Continuás con la cobertura', 'ok');
+        mostrarMsg('finIncMsg', 'Registrado — Ya estás con la unidad. Continuá con tus seguimientos.', 'ok');
         setTimeout(volverPanel, 2000);
       } else {
         novedadActiva.horaFinIncidente = data.hora;
@@ -1212,7 +1221,7 @@ async function confirmarFinalizarIncidente() {
       mostrarMsg('finIncMsg', 'Sin señal. Intentá de nuevo cuando tengas conexión.', 'err');
     }
   }
-  btn.disabled = false; btn.textContent = '✅ Confirmar — incidente resuelto';
+  btn.disabled = false; btn.textContent = '✅ Confirmar — ya estoy con la unidad';
 }
 
 function irSeleccionarPlaca() {
@@ -1638,13 +1647,13 @@ function mostrarPostNovedad(tipo, placa, hora, teniaRuta, descripcion) {
     `<strong>${tipo}</strong> reportada a las ${hora}<br>Unidad afectada: <strong>${placa}</strong>`;
   if (teniaRuta) {
     document.getElementById('opcionesPostNovedad').innerHTML = `
-      <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:8px">✅ Se resolvió — Continuar cobertura</button>
-      <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No se resolvió — Finalizar</button>
+      <button class="btn btn-green" onclick="irFinalizarIncidente(true)" style="margin-top:8px">✅ Ya alcancé la unidad — Continuar cobertura</button>
+      <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No voy a alcanzar la unidad — Finalizar</button>
     `;
   } else {
     document.getElementById('opcionesPostNovedad').innerHTML = `
-      <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:8px">✅ Se resolvió — Iniciar cobertura</button>
-      <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No se resolvió — Finalizar sin cobertura</button>
+      <button class="btn btn-green" onclick="irFinalizarIncidente(false)" style="margin-top:8px">✅ Ya alcancé la unidad — Iniciar cobertura</button>
+      <button class="btn btn-red" onclick="irFinSinCobertura()">❌ No voy a alcanzar la unidad — Finalizar sin cobertura</button>
     `;
   }
   mostrarPaso('pasoPostNovedad');
