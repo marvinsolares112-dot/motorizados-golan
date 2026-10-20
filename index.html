@@ -81,6 +81,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .num-mot{display:inline-block;min-width:22px;text-align:center;font-size:11px;font-weight:700;
   background:#1f5a82;color:#fff;border-radius:6px;padding:2px 6px;margin-right:6px}
 .mot-unidad{font-size:12px;color:#1f5a82;font-weight:600}
+.mot-unidad.mot-sin{color:#8a8a8a;font-weight:500;font-style:italic}
 .grupo-cuerpo .mot-card:last-child,.grupo-cuerpo .presencia-item:last-child{margin-bottom:0;border-bottom:none}
 .presencia-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .presencia-acciones{display:flex;gap:6px;flex-shrink:0}
@@ -1894,13 +1895,29 @@ async function cambiarMiClave() {
   } catch(e) { if (e.message !== 'sesion') mostrarMsg('msgMiClave', 'Error de conexión.', 'err'); }
 }
 
-// Qué unidad (vehículo) está cubriendo: la placa del último punto registrado.
-function unidadQueCubre(m) {
-  if (!m || !m.puntos || !m.puntos.length) return '';
+// ===== Qué está cubriendo ahora (corregido 20-10-2026) =====
+// Antes se mostraba la última placa registrada aunque la ruta ya estuviera cerrada,
+// así que decía "Cubriendo: C-830BZT" de una unidad que el motorizado ya había
+// finalizado. Ahora se mira primero el ÚLTIMO movimiento del día: si ese movimiento
+// cerró la cobertura, no está cubriendo nada.
+const TIPOS_QUE_CIERRAN = ['Fin ruta', 'Finalizó sin cobertura'];
+
+function estadoCobertura(m) {
+  if (!m || !m.puntos || !m.puntos.length) return { cerrada: true, unidad: '' };
+  const ultimo = (m.puntos[m.puntos.length - 1].tipo || '').toString().trim();
+  if (TIPOS_QUE_CIERRAN.indexOf(ultimo) !== -1) return { cerrada: true, unidad: '' };
+  // Sigue en ruta: se busca hacia atrás la última placa de unidad registrada.
   for (let i = m.puntos.length - 1; i >= 0; i--) {
     const p = m.puntos[i].placaUnidad;
-    if (p && p.toString().trim()) return p.toString().trim();
+    if (p && p.toString().trim()) return { cerrada: false, unidad: p.toString().trim() };
   }
+  return { cerrada: false, unidad: '' };   // en ruta, pero sin placa registrada
+}
+
+function lineaCobertura(m) {
+  const e = estadoCobertura(m);
+  if (e.cerrada) return '<div class="mot-unidad mot-sin">Sin ruta activa</div>';
+  if (e.unidad)  return '<div class="mot-unidad">Cubriendo: ' + escH(e.unidad) + '</div>';
   return '';
 }
 
@@ -2063,7 +2080,7 @@ async function cargarAdmin() {
       <div class="mot-card" onclick="verDetalle('${m.codigo}')">
         <div class="mot-nombre">${m.numero ? `<span class="num-mot">${escH(m.numero)}</span>` : ''}${escH(m.nombre)}</div>
         <div class="mot-info">${sesion.verCodigos ? `Código: ${escH(m.codigo)} | ` : ''}Moto: ${escH(m.placaMoto)}</div>
-        ${unidadQueCubre(m) ? `<div class="mot-unidad">Cubriendo: ${escH(unidadQueCubre(m))}</div>` : ''}
+        ${lineaCobertura(m)}
         <div class="mot-info">${m.puntos.length} registros — Último: ${m.puntos[m.puntos.length-1]?.tipo} a las ${m.puntos[m.puntos.length-1]?.hora}</div>
       </div>`);
     window._adminData = data.motorizados;
