@@ -67,6 +67,21 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .punto-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .cobertura-titulo{font-size:11px;font-weight:bold;color:#6d1f2a;margin-bottom:4px}
 .presencia-item{padding:10px 0;border-bottom:1px solid #eee}
+/* Grupos por unidad operativa en el panel de administrador (20-10-2026) */
+.grupo-uo{border:1px solid #ccc;border-radius:8px;margin-bottom:8px;overflow:hidden;background:#fff}
+.grupo-uo>summary{list-style:none;cursor:pointer;padding:11px 12px;background:#f2f2f2;
+  font-weight:600;font-size:14px;color:#333;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.grupo-uo>summary::-webkit-details-marker{display:none}
+.grupo-uo>summary:hover{background:#e8e8e8}
+.grupo-uo[open]>summary{border-bottom:1px solid #ddd}
+.grupo-uo .flecha{font-size:11px;color:#777;transition:transform .15s}
+.grupo-uo[open] .flecha{transform:rotate(90deg)}
+.grupo-uo .conteo{font-size:11px;font-weight:600;color:#555;background:#ddd;border-radius:10px;padding:2px 8px}
+.grupo-cuerpo{padding:10px 12px}
+.num-mot{display:inline-block;min-width:22px;text-align:center;font-size:11px;font-weight:700;
+  background:#1f5a82;color:#fff;border-radius:6px;padding:2px 6px;margin-right:6px}
+.mot-unidad{font-size:12px;color:#1f5a82;font-weight:600}
+.grupo-cuerpo .mot-card:last-child,.grupo-cuerpo .presencia-item:last-child{margin-bottom:0;border-bottom:none}
 .presencia-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .presencia-acciones{display:flex;gap:6px;flex-shrink:0}
 #mapa-detalle{height:280px;border-radius:8px;margin-top:10px}
@@ -1879,6 +1894,49 @@ async function cambiarMiClave() {
   } catch(e) { if (e.message !== 'sesion') mostrarMsg('msgMiClave', 'Error de conexión.', 'err'); }
 }
 
+// Qué unidad (vehículo) está cubriendo: la placa del último punto registrado.
+function unidadQueCubre(m) {
+  if (!m || !m.puntos || !m.puntos.length) return '';
+  for (let i = m.puntos.length - 1; i >= 0; i--) {
+    const p = m.puntos[i].placaUnidad;
+    if (p && p.toString().trim()) return p.toString().trim();
+  }
+  return '';
+}
+
+// ===== Agrupado por unidad operativa en el panel (20-10-2026) =====
+// Cada grupo es un desplegable: se toca el nombre de la unidad y se abre.
+// Las cuentas de administrador van en su propio grupo al final.
+function nombreDeGrupo(p) {
+  if (p.esCuentaAdmin) return 'Cuentas de administrador';
+  const u = (p.unidadOperativa || '').toString().trim();
+  return u || 'Sin unidad operativa asignada';
+}
+
+function pintarGrupos(lista, pintarUno) {
+  const orden = [];
+  const grupos = {};
+  lista.forEach(function (p) {
+    const g = nombreDeGrupo(p);
+    if (!grupos[g]) { grupos[g] = []; orden.push(g); }
+    grupos[g].push(p);
+  });
+  // Alfabético, pero "Sin unidad..." y "Cuentas de administrador" van al final
+  orden.sort(function (a, b) {
+    const peso = function (n) { return n === 'Cuentas de administrador' ? 2 : (n.indexOf('Sin unidad') === 0 ? 1 : 0); };
+    if (peso(a) !== peso(b)) return peso(a) - peso(b);
+    return a.localeCompare(b, 'es');
+  });
+  // Si todos caen en un solo grupo, no tiene sentido agrupar
+  if (orden.length <= 1) return lista.map(pintarUno).join('');
+  return orden.map(function (g) {
+    return '<details class="grupo-uo" open><summary>' +
+      '<span><span class="flecha">▶</span> ' + escH(g) + '</span>' +
+      '<span class="conteo">' + grupos[g].length + '</span></summary>' +
+      '<div class="grupo-cuerpo">' + grupos[g].map(pintarUno).join('') + '</div></details>';
+  }).join('');
+}
+
 async function cargarPresenciaAdmin() {
   const cont = document.getElementById('listaPresencia');
   cont.innerHTML = '<p style="font-size:13px;color:#777">Cargando...</p>';
@@ -1912,13 +1970,16 @@ async function cargarPresenciaAdmin() {
         activo: infoMap[p.codigo]?.activo ?? 'Sí',
         puedeGestionar: infoMap[p.codigo]?.puedeGestionar ?? false,
         esCuentaAdmin: !!infoMap[p.codigo]?.esCuentaAdmin,
-        rol: infoMap[p.codigo]?.rol || ''
+        rol: infoMap[p.codigo]?.rol || '',
+        unidadOperativa: infoMap[p.codigo]?.unidadOperativa || '',
+        operacion: infoMap[p.codigo]?.operacion || '',
+        numero: infoMap[p.codigo]?.numero || ''
       };
     });
 
     lista.sort((a,b) => a.minutos - b.minutos);
 
-    cont.innerHTML = lista.map(p => {
+    cont.innerHTML = pintarGrupos(lista, p => {
       let estadoTxt, estadoColor;
       if (p.minutos < 3) { estadoTxt = 'En línea ahora'; estadoColor = '#2d6a4f'; }
       else if (p.minutos < 1440) { estadoTxt = `Inactivo hace ${p.minutos < 60 ? p.minutos + ' min' : Math.floor(p.minutos/60) + ' h'}`; estadoColor = '#8a6d1f'; }
@@ -1927,7 +1988,7 @@ async function cargarPresenciaAdmin() {
         <div class="presencia-item">
           <div class="presencia-top">
             <div>
-              <strong>${escH(p.nombre)}</strong> ${sesion.verCodigos ? `<span style="color:#777;font-size:11px">${escH(p.codigo)}</span>` : ''}${p.esCuentaAdmin ? `<span class="etiqueta">${escH(ROL_TXT[p.rol] || 'Administrador')}</span>` : ''}<br>
+              ${p.numero ? `<span class="num-mot">${escH(p.numero)}</span>` : ''}<strong>${escH(p.nombre)}</strong> ${sesion.verCodigos ? `<span style="color:#777;font-size:11px">${escH(p.codigo)}</span>` : ''}${p.esCuentaAdmin ? `<span class="etiqueta">${escH(ROL_TXT[p.rol] || 'Administrador')}</span>` : ''}<br>
               <span style="font-size:12px;color:${estadoColor}">${estadoTxt}</span>
               ${p.activo === 'No' ? '<span style="color:#6d1f2a;font-size:11px;margin-left:6px">(Desactivado)</span>' : ''}
             </div>
@@ -1938,7 +1999,7 @@ async function cargarPresenciaAdmin() {
             </div>` : ''}
           </div>
         </div>`;
-    }).join('') || '<p style="font-size:13px;color:#777">Nadie ha iniciado sesión hoy.</p>';
+    }) || '<p style="font-size:13px;color:#777">Nadie ha iniciado sesión hoy.</p>';
   } catch(e) {
     cont.innerHTML = '<p style="color:#6d1f2a;font-size:13px">Error al cargar presencia.</p>';
   }
@@ -1998,12 +2059,13 @@ async function cargarAdmin() {
     if (data.sesionInvalida) { sesionAdminVencida(data.error); return; }
     if (!data.success) { document.getElementById('listaMotorizados').innerHTML = `<p style="color:#6d1f2a;font-size:13px">${data.error}</p>`; return; }
     if (!data.motorizados.length) { document.getElementById('listaMotorizados').innerHTML = '<p style="font-size:13px;color:#777">Ningún motorizado activo hoy.</p>'; return; }
-    document.getElementById('listaMotorizados').innerHTML = data.motorizados.map(m => `
+    document.getElementById('listaMotorizados').innerHTML = pintarGrupos(data.motorizados, m => `
       <div class="mot-card" onclick="verDetalle('${m.codigo}')">
-        <div class="mot-nombre">${m.nombre}</div>
-        <div class="mot-info">${sesion.verCodigos ? `Código: ${m.codigo} | ` : ''}Moto: ${m.placaMoto}</div>
+        <div class="mot-nombre">${m.numero ? `<span class="num-mot">${escH(m.numero)}</span>` : ''}${escH(m.nombre)}</div>
+        <div class="mot-info">${sesion.verCodigos ? `Código: ${escH(m.codigo)} | ` : ''}Moto: ${escH(m.placaMoto)}</div>
+        ${unidadQueCubre(m) ? `<div class="mot-unidad">Cubriendo: ${escH(unidadQueCubre(m))}</div>` : ''}
         <div class="mot-info">${m.puntos.length} registros — Último: ${m.puntos[m.puntos.length-1]?.tipo} a las ${m.puntos[m.puntos.length-1]?.hora}</div>
-      </div>`).join('');
+      </div>`);
     window._adminData = data.motorizados;
   } catch(e) { document.getElementById('listaMotorizados').innerHTML = '<p style="color:#6d1f2a;font-size:13px">Error de conexión.</p>'; }
 }
