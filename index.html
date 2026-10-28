@@ -1939,6 +1939,31 @@ function nombreDeGrupo(p) {
   return u || 'Sin unidad operativa asignada';
 }
 
+// ===== Orden del control de motorizados (28-10-2026) =====
+// Se ordena por NUMERO de motorizado (01, 02, 03...), no por codigo.
+// Los que todavia no tienen numero asignado van despues, ordenados por la hora
+// en que iniciaron ruta, para que la lista no se reacomode a cada seguimiento.
+function ordenarPorNumero(lista) {
+  function numeroDe(m) {
+    const n = parseInt((m.numero || '').toString().trim(), 10);
+    return isNaN(n) ? null : n;
+  }
+  function minutosDelPrimerReporte(m) {
+    const p = (m.puntos && m.puntos.length) ? m.puntos[0] : null;
+    if (!p || !p.hora) return 99999;
+    const t = p.hora.toString().split(':');
+    const h = parseInt(t[0], 10), mi = parseInt(t[1], 10);
+    return (isNaN(h) || isNaN(mi)) ? 99999 : h * 60 + mi;
+  }
+  return lista.slice().sort(function (a, b) {
+    const na = numeroDe(a), nb = numeroDe(b);
+    if (na !== null && nb !== null) return na - nb;   // los dos tienen numero
+    if (na !== null) return -1;                        // el que tiene numero va primero
+    if (nb !== null) return 1;
+    return minutosDelPrimerReporte(a) - minutosDelPrimerReporte(b);
+  });
+}
+
 function pintarGrupos(lista, pintarUno) {
   const orden = [];
   const grupos = {};
@@ -1956,7 +1981,7 @@ function pintarGrupos(lista, pintarUno) {
   // Si todos caen en un solo grupo, no tiene sentido agrupar
   if (orden.length <= 1) return lista.map(pintarUno).join('');
   return orden.map(function (g) {
-    return '<details class="grupo-uo" open><summary>' +
+    return '<details class="grupo-uo"><summary>' +
       '<span><span class="flecha">▶</span> ' + escH(g) + '</span>' +
       '<span class="conteo">' + grupos[g].length + '</span></summary>' +
       '<div class="grupo-cuerpo">' + grupos[g].map(pintarUno).join('') + '</div></details>';
@@ -2085,7 +2110,7 @@ async function cargarAdmin() {
     if (data.sesionInvalida) { sesionAdminVencida(data.error); return; }
     if (!data.success) { document.getElementById('listaMotorizados').innerHTML = `<p style="color:#6d1f2a;font-size:13px">${data.error}</p>`; return; }
     if (!data.motorizados.length) { document.getElementById('listaMotorizados').innerHTML = '<p style="font-size:13px;color:#777">Ningún motorizado activo hoy.</p>'; return; }
-    document.getElementById('listaMotorizados').innerHTML = pintarGrupos(data.motorizados, m => `
+    document.getElementById('listaMotorizados').innerHTML = pintarGrupos(ordenarPorNumero(data.motorizados), m => `
       <div class="mot-card" onclick="verDetalle('${m.codigo}')">
         <div class="mot-nombre">${m.numero ? `<span class="num-mot">${escH(m.numero)}</span>` : ''}${escH(m.nombre)}</div>
         <div class="mot-info">${sesion.verCodigos ? `Código: ${escH(m.codigo)} | ` : ''}Moto: ${escH(m.placaMoto)}</div>
