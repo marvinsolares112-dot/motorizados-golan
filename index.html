@@ -676,9 +676,30 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYCl3ZYGpRWbDNST6Di
 async function postAccionRes(obj) {
   let payload = obj;
   const MAX = 12;
+  // 16-11-2026: Google a veces rechaza la peticion ANTES de ejecutarla (en el registro
+  // de ejecuciones sale "Fallida" con 0 s y sin ningun log). Cuando eso pasa no corrio
+  // nada, asi que NO se escribio nada y reintentar es seguro. Ademas todas las acciones
+  // tienen su propio anti-duplicado en el servidor. Antes esto se salia del reintento y
+  // el motorizado tenia que volver a tocar el boton a mano.
+  const MAX_RED = 6;
+  let fallosRed = 0;
   for (let intento = 0; ; intento++) {
-    const res = await fetch(SCRIPT_URL, {method: 'POST', body: JSON.stringify(payload)});
-    const data = await res.json();
+    let data;
+    try {
+      const res = await fetch(SCRIPT_URL, {method: 'POST', body: JSON.stringify(payload)});
+      data = await res.json();
+      fallosRed = 0;
+    } catch (errRed) {
+      fallosRed++;
+      if (fallosRed > MAX_RED) throw errRed;   // ya fueron demasiados: lo maneja quien llamo
+      document.querySelectorAll('button:disabled').forEach(b => {
+        if (/^(Enviando|Hay muchos|Reintentando)/.test(b.textContent)) {
+          b.textContent = 'Reintentando\u2026 (' + fallosRed + ')';
+        }
+      });
+      await new Promise(r => setTimeout(r, 1500 + Math.random() * 2000 + fallosRed * 700));
+      continue;
+    }
     if (data && data.ocupado && intento < MAX) {
       if (data.fotoUrl && data.fotoSello) {
         // Mandamos el sello para NO volver a guardar la foto en Drive, pero la foto viaja
@@ -766,7 +787,7 @@ function ocultarFab() {
 }
 
 // ---------- Créditos ----------
-const APP_VERSION = '2.0 · octubre 2026';
+const APP_VERSION = '2.1 · 16 nov 2026';
 function abrirCreditos() {
   document.getElementById('appVersion').textContent = APP_VERSION;
   document.getElementById('modalCreditos').style.display = 'flex';
